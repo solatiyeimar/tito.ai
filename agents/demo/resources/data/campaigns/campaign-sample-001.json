@@ -1,0 +1,31 @@
+{
+    "id": "campaign-sample-001",
+    "name": "Cobranza Proactiva Enero",
+    "description": "Campaña para recordar pagos pendientes a clientes VIP",
+    "type": "outbound",
+    "assistant_id": "demo-assistant",
+    "status": "draft",
+    "concurrency": 2,
+    "contacts": [
+        {
+            "id": "contact-1",
+            "phone": "+573001234567",
+            "name": "Juan Perez",
+            "variables": {
+                "deuda": "150.000 COP",
+                "fecha_vencimiento": "2026-01-30"
+            },
+            "status": "pending"
+        },
+        {
+            "id": "contact-2",
+            "phone": "+573009876543",
+            "name": "Maria Garcia",
+            "variables": {
+                "deuda": "45.000 COP",
+                "fecha_vencimiento": "2026-01-25"
+            },
+            "status": "pending"
+        }
+    ]
+}
