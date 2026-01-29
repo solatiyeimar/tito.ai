@@ -1,7 +1,8 @@
 """Bot configuration management module."""
 
 import os
-from typing import TypedDict, Literal, NotRequired, List, Dict, Any, Optional
+from typing import Any, Dict, List, Literal, NotRequired, Optional, TypedDict
+
 from dotenv import load_dotenv
 from pipecat.services.google.llm import GoogleLLMService
 from pipecat.services.openai.llm import BaseOpenAILLMService
@@ -19,9 +20,14 @@ BotType = Literal["simple", "flow", "multimodal"]
 class BotConfig:
     def __init__(self):
         load_dotenv()
-        
+
         self.tools: List[Dict[str, Any]] = []
         self.flow_config: Optional[Any] = None
+        self.inactivity_messages: List[Dict[str, Any]] = []
+        self.initial_message: Optional[str] = None
+        self.initial_delay: float = 0.0
+        self.initial_message_interruptible: bool = True
+        self.interruptibility: bool = True
 
         # Validate core required vars
         required = {
@@ -175,15 +181,15 @@ class BotConfig:
     def llm_model(self) -> str:
         match self.llm_provider:
             case "google":
-                return os.getenv("GOOGLE_MODEL", "gemini-2.0-flash")
+                return os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")
             case "openai":
-                return os.getenv("OPENAI_MODEL", "gpt-4o")
+                return os.getenv("OPENAI_MODEL", "gpt-5o")
             case "anthropic":
-                return os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20240620")
+                return os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
             case "groq":
-                return os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
+                return os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
             case "together":
-                return os.getenv("TOGETHER_MODEL", "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo")
+                return os.getenv("TOGETHER_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
             case "mistral":
                 return os.getenv("MISTRAL_MODEL", "mistral-large-latest")
             case "ultravox":
@@ -243,8 +249,8 @@ class BotConfig:
         provider = os.getenv("STT_PROVIDER")
         # If multimodal, default to the native provider unless an explicit non-default is provided
         if self.architecture_type == "multimodal":
-             if not provider or provider.lower() in ["deepgram"]:
-                  return self.llm_provider
+            if not provider or provider.lower() in ["deepgram"]:
+                return self.llm_provider
         return (provider or "deepgram").lower()
 
     @stt_provider.setter
@@ -276,8 +282,8 @@ class BotConfig:
         provider = os.getenv("TTS_PROVIDER")
         # If multimodal, default to the native provider unless an explicit non-default is provided
         if self.architecture_type == "multimodal":
-             if not provider or provider.lower() in ["cartesia", "deepgram"]:
-                  return self.llm_provider
+            if not provider or provider.lower() in ["cartesia", "deepgram"]:
+                return self.llm_provider
         return (provider or "deepgram").lower()
 
     @tts_provider.setter
@@ -306,7 +312,10 @@ class BotConfig:
             case "elevenlabs":
                 return os.getenv("ELEVENLABS_VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")
             case "playht":
-                return os.getenv("PLAYHT_VOICE_ID", "s3://voice-training-authenticated/original_voices/marissa_extracted/manifest.json")
+                return os.getenv(
+                    "PLAYHT_VOICE_ID",
+                    "s3://voice-training-authenticated/original_voices/marissa_extracted/manifest.json",
+                )
             case "rime":
                 return os.getenv("RIME_VOICE_ID", "marissa")
             case "openai":
@@ -314,26 +323,42 @@ class BotConfig:
             case "azure":
                 return os.getenv("AZURE_VOICE", "en-US-AvaMultilingualNeural")
             case "ultravox":
-                return os.getenv("ULTRAVOX_VOICE", "a6afd1fc-960f-45d3-9e46-e8182af650b9") # Default to 'Clive'
+                return os.getenv(
+                    "ULTRAVOX_VOICE", "a6afd1fc-960f-45d3-9e46-e8182af650b9"
+                )  # Default to 'Clive'
             case _:
                 return os.getenv("TTS_VOICE", "")
 
     # Backward compatibility properties
     @property
     def deepgram_voice(self) -> str:
-        return self.tts_voice if self.tts_provider == "deepgram" else os.getenv("DEEPGRAM_VOICE", "aura-athena-en")
+        return (
+            self.tts_voice
+            if self.tts_provider == "deepgram"
+            else os.getenv("DEEPGRAM_VOICE", "aura-athena-en")
+        )
 
     @property
     def cartesia_voice(self) -> str:
-        return self.tts_voice if self.tts_provider == "cartesia" else os.getenv("CARTESIA_VOICE", "79a125e8-cd45-4c13-8a67-188112f4dd22")
+        return (
+            self.tts_voice
+            if self.tts_provider == "cartesia"
+            else os.getenv("CARTESIA_VOICE", "79a125e8-cd45-4c13-8a67-188112f4dd22")
+        )
 
     @property
     def elevenlabs_voice_id(self) -> str:
-        return self.tts_voice if self.tts_provider == "elevenlabs" else os.getenv("ELEVENLABS_VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")
+        return (
+            self.tts_voice
+            if self.tts_provider == "elevenlabs"
+            else os.getenv("ELEVENLABS_VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")
+        )
 
     @property
     def rime_voice_id(self) -> str:
-        return self.tts_voice if self.tts_provider == "rime" else os.getenv("RIME_VOICE_ID", "marissa")
+        return (
+            self.tts_voice if self.tts_provider == "rime" else os.getenv("RIME_VOICE_ID", "marissa")
+        )
 
     @property
     def rime_reduce_latency(self) -> bool:
@@ -354,10 +379,27 @@ class BotConfig:
     @property
     def amd_enabled(self) -> bool:
         return self._is_truthy(os.getenv("AMD_ENABLED", "false"))
-        
+
+    @property
+    def agent_type(self) -> str:
+        return os.getenv("AGENT_TYPE", "inbound")
+
+    @agent_type.setter
+    def agent_type(self, value: str):
+        os.environ["AGENT_TYPE"] = value
+
     @property
     def speak_first(self) -> bool:
-        return self._is_truthy(os.getenv("SPEAK_FIRST", "true"))
+        # Check explicit env var first
+        if os.getenv("SPEAK_FIRST") is not None:
+            return self._is_truthy(os.getenv("SPEAK_FIRST"))
+
+        # If initial_message is set, we should speak first
+        if self.initial_message:
+            return True
+
+        # Fallback to type-based logic: Outbound speaks first, Inbound waits
+        return self.agent_type == "outbound"
 
     @speak_first.setter
     def speak_first(self, value: bool):
@@ -365,4 +407,4 @@ class BotConfig:
 
     @property
     def classifier_model(self) -> str:
-        return os.getenv("CLASSIFIER_MODEL", "gemini-2.0-flash")
+        return os.getenv("CLASSIFIER_MODEL", "gemini-3.0-flash")

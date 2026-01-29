@@ -8,9 +8,10 @@ GET_SECURE_DATA_TOOL = {
         "parameters": {
             "type": "object",
             "properties": {},
-        }
-    }
+        },
+    },
 }
+
 
 async def get_secure_data_handler(function_name, tool_call_id, args, llm, context, result_callback):
     token = os.environ.get("CRM_SECRET_TOKEN")

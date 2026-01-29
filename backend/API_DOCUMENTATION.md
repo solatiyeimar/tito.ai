@@ -54,7 +54,7 @@ Crea un nuevo asistente.
   "agent": {
     "system_prompt": "Eres un asistente útil",
     "provider": "google",
-    "model": "gemini-2.0-flash",
+    "model": "gemini-3.0-flash",
     "temperature": 0.7
   },
   "io_layer": {
@@ -139,7 +139,7 @@ Endpoint dinámico para conexión RTVI con configuración inline.
   "bot_type": "flow",
   "bot_name": "Marissa",
   "llm_provider": "google",
-  "llm_model": "gemini-2.0-flash",
+  "llm_model": "gemini-3.0-flash",
   "llm_temperature": 0.7,
   "stt_provider": "deepgram",
   "tts_provider": "deepgram",
@@ -285,6 +285,25 @@ Recibe webhooks de servicios externos.
 }
 ```
 
+### PipelineSettings
+```json
+{
+  "vad": "VADConfig",
+  "interruptibility": "boolean",
+  "speak_first": "boolean",
+  "initial_message": "string (opcional)",
+  "initial_delay": "float (segundos)",
+  "initial_message_interruptible": "boolean",
+  "inactivity_messages": [
+    {
+      "message": "string",
+      "timeout": "float (segundos de espera desde el evento anterior)",
+      "end_behavior": "continue | hangup"
+    }
+  ]
+}
+```
+
 ### AgentConfig
 ```json
 {
@@ -371,7 +390,7 @@ curl -X POST http://localhost:7860/assistants \
     "agent": {
       "system_prompt": "Eres un asistente de ventas profesional",
       "provider": "google",
-      "model": "gemini-2.0-flash"
+      "model": "gemini-3.0-flash"
     },
     "flow": {
       "initial_node": "greeting",

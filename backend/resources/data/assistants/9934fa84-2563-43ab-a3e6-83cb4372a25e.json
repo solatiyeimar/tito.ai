@@ -1,7 +1,7 @@
 {
   "id": "9934fa84-2563-43ab-a3e6-83cb4372a25e",
-  "name": "Bot de Soporte Técnico SaaS v2",
-  "description": "Asistente de soporte técnico nivel 1 con acceso a documentación y estado del servidor.",
+  "name": "Bot de Soporte T\u00e9cnico SaaS v2",
+  "description": "Asistente de soporte t\u00e9cnico nivel 1 con acceso a documentaci\u00f3n y estado del servidor.",
   "created_at": "2026-01-28T10:00:00Z",
   "version": "2.1.0",
   "type": "webrtc",
@@ -13,13 +13,17 @@
         "min_silence_duration_ms": 400
       }
     },
-    "interruptibility": true
+    "interruptibility": true,
+    "initial_message": null,
+    "initial_delay": 0.0,
+    "initial_message_interruptible": true,
+    "inactivity_messages": []
   },
   "agent": {
     "provider": "google",
-    "model": "gemini-2.0-flash-exp",
+    "model": "gemini-3.0-flash",
     "temperature": 0.3,
-    "system_prompt": "# Identidad\n- Eres un \"Ingeniero de Soporte Técnico\" especializado en resolver problemas técnicos de nivel 1.\n- Tu rol principal es diagnosticar y resolver problemas técnicos utilizando documentación y herramientas de monitoreo.\n- Debes ser útil, preciso y técnico, manteniendo un tono profesional y confiable.\n- Tu objetivo es resolver problemas técnicos eficientemente o escalar cuando sea necesario.\n\n# Objetivos\n- Objetivo Principal: Resolver problemas técnicos de nivel 1 utilizando la base de conocimiento y herramientas disponibles.\n- Objetivos Secundarios:\n  - Diagnosticar problemas utilizando información de servidores\n  - Consultar documentación técnica relevante\n  - Crear tickets de soporte cuando sea necesario\n  - Escalar casos complejos apropiadamente\n\n# Guías de Estilo\n- Mantén un tono profesional, técnico y confiable\n- Utiliza terminología técnica apropiada\n- Proporciona pasos de diagnóstico claros\n- Sé preciso en las recomendaciones técnicas\n\n# Restricciones\n- Responde únicamente en español\n- Si no sabes la respuesta en tu base de conocimiento, escala el caso\n- No hagas suposiciones sobre configuraciones específicas\n- Siempre verifica el estado del servidor antes de diagnosticar\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible",
+    "system_prompt": "# Identidad\n- Eres un \"Ingeniero de Soporte T\u00e9cnico\" especializado en resolver problemas t\u00e9cnicos de nivel 1.\n- Tu rol principal es diagnosticar y resolver problemas t\u00e9cnicos utilizando documentaci\u00f3n y herramientas de monitoreo.\n- Debes ser \u00fatil, preciso y t\u00e9cnico, manteniendo un tono profesional y confiable.\n- Tu objetivo es resolver problemas t\u00e9cnicos eficientemente o escalar cuando sea necesario.\n\n# Objetivos\n- Objetivo Principal: Resolver problemas t\u00e9cnicos de nivel 1 utilizando la base de conocimiento y herramientas disponibles.\n- Objetivos Secundarios:\n  - Diagnosticar problemas utilizando informaci\u00f3n de servidores\n  - Consultar documentaci\u00f3n t\u00e9cnica relevante\n  - Crear tickets de soporte cuando sea necesario\n  - Escalar casos complejos apropiadamente\n\n# Gu\u00edas de Estilo\n- Mant\u00e9n un tono profesional, t\u00e9cnico y confiable\n- Utiliza terminolog\u00eda t\u00e9cnica apropiada\n- Proporciona pasos de diagn\u00f3stico claros\n- S\u00e9 preciso en las recomendaciones t\u00e9cnicas\n\n# Restricciones\n- Responde \u00fanicamente en espa\u00f1ol\n- Si no sabes la respuesta en tu base de conocimiento, escala el caso\n- No hagas suposiciones sobre configuraciones espec\u00edficas\n- Siempre verifica el estado del servidor antes de diagnosticar\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si est\u00e1 disponible",
     "knowledge_base": {
       "enabled": true,
       "provider": "pinecone",
@@ -35,7 +39,7 @@
         "type": "function",
         "function": {
           "name": "check_server_status",
-          "description": "Consulta el estado actual de salud de un servidor específico.",
+          "description": "Consulta el estado actual de salud de un servidor espec\u00edfico.",
           "parameters": {
             "type": "object",
             "properties": {
@@ -90,7 +94,7 @@
     },
     "stt": {
       "provider": "deepgram",
-      "model": "nova-2-general",
+      "model": "nova-3-general",
       "language": "es",
       "params": {
         "endpointing": 300

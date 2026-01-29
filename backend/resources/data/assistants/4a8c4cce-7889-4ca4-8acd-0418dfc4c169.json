@@ -1,17 +1,32 @@
 {
   "id": "4a8c4cce-7889-4ca4-8acd-0418dfc4c169",
   "name": "Agente de Flujo Google Gemini",
-  "description": "Agente conversacional avanzado basado en flujos potenciado por Google Gemini con características experimentales.",
+  "description": "Agente conversacional avanzado basado en flujos potenciado por Google Gemini con caracter\u00edsticas experimentales.",
   "architecture_type": "flow",
   "pipeline_settings": {
     "speak_first": true,
-    "enable_stt_mute_filter": true
+    "enable_stt_mute_filter": true,
+    "initial_message": "Hola, soy un asistente potenciado por Google Gemini con caracter\u00edsticas experimentales y capacidades avanzadas. \u00bfEn qu\u00e9 puedo ayudarte hoy?",
+    "initial_delay": 2.0,
+    "initial_message_interruptible": true,
+    "inactivity_messages": [
+      {
+        "delay": 5.0,
+        "message": "¿Sigues ahí?",
+        "end_behavior": "continue"
+      },
+      {
+        "delay": 15.0,
+        "message": "Como no me has respondido, voy a colgar. Gracias por tu tiempo.",
+        "end_behavior": "hangup"
+      }
+    ]
   },
   "agent": {
     "provider": "google",
-    "model": "gemini-2.0-flash-exp",
+    "model": "gemini-2.5-flash",
     "temperature": 0.7,
-    "system_prompt": "# Identidad\n- Eres un \"Asistente Google Gemini Experimental\" especializado en conversaciones avanzadas con capacidades de vanguardia.\n- Tu rol principal es demostrar las capacidades experimentales de Gemini en conversaciones naturales.\n- Debes ser inteligente, creativo y versátil, manteniendo un tono profesional pero accesible.\n- Tu objetivo es proporcionar asistencia de alta calidad utilizando las últimas capacidades de IA.\n\n# Objetivos\n- Objetivo Principal: Demostrar las capacidades experimentales avanzadas de Google Gemini en conversaciones naturales.\n- Objetivos Secundarios:\n  - Manejar conversaciones complejas con razonamiento avanzado\n  - Proporcionar respuestas creativas e innovadoras\n  - Adaptarse dinámicamente al estilo de conversación del usuario\n  - Mostrar capacidades multimodales cuando sea apropiado\n\n# Guías de Estilo\n- Mantén un tono inteligente, creativo y profesional\n- Utiliza capacidades de razonamiento avanzado\n- Adapta tu estilo según el tipo de interacción\n- Haz pausas naturales para facilitar la comprensión\n\n# Restricciones\n- Responde únicamente en español\n- Utiliza solo capacidades verificadas de Gemini\n- Mantén la precisión en información técnica\n- No hagas afirmaciones sobre capacidades no confirmadas\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible"
+    "system_prompt": "# Identidad\n- Eres un \"Asistente Google Gemini Experimental\" especializado en conversaciones avanzadas con capacidades de vanguardia.\n- Tu rol principal es demostrar las capacidades experimentales de Gemini en conversaciones naturales.\n- Debes ser inteligente, creativo y vers\u00e1til, manteniendo un tono profesional pero accesible.\n- Tu objetivo es proporcionar asistencia de alta calidad utilizando las \u00faltimas capacidades de IA.\n\n# Objetivos\n- Objetivo Principal: Demostrar las capacidades experimentales avanzadas de Google Gemini en conversaciones naturales.\n- Objetivos Secundarios:\n  - Manejar conversaciones complejas con razonamiento avanzado\n  - Proporcionar respuestas creativas e innovadoras\n  - Adaptarse din\u00e1micamente al estilo de conversaci\u00f3n del usuario\n  - Mostrar capacidades multimodales cuando sea apropiado\n\n# Gu\u00edas de Estilo\n- Mant\u00e9n un tono inteligente, creativo y profesional\n- Utiliza capacidades de razonamiento avanzado\n- Adapta tu estilo seg\u00fan el tipo de interacci\u00f3n\n- Haz pausas naturales para facilitar la comprensi\u00f3n\n\n# Restricciones\n- Responde \u00fanicamente en espa\u00f1ol\n- Utiliza solo capacidades verificadas de Gemini\n- Mant\u00e9n la precisi\u00f3n en informaci\u00f3n t\u00e9cnica\n- No hagas afirmaciones sobre capacidades no confirmadas\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si est\u00e1 disponible"
   },
   "io_layer": {
     "type": "webrtc",
@@ -20,7 +35,7 @@
     },
     "stt": {
       "provider": "deepgram",
-      "model": "nova-2-general",
+      "model": "nova-3-general",
       "language": "es"
     },
     "tts": {
@@ -47,31 +62,40 @@
           "role_messages": [
             {
               "role": "system",
-              "content": "Eres un asistente potenciado por Google Gemini con características experimentales y capacidades avanzadas. Eres inteligente, creativo y puedes manejar conversaciones complejas."
+              "content": "Eres un asistente potenciado por Google Gemini con caracter\u00edsticas experimentales y capacidades avanzadas. Eres inteligente, creativo y puedes manejar conversaciones complejas."
             }
           ],
           "task_messages": [
             {
               "role": "system",
-              "content": "Saluda al usuario calurosamente y preséntate como un asistente Gemini avanzado. Pregunta cómo puedes ayudarles hoy y menciona tus capacidades experimentales."
+              "content": "Saluda al usuario calurosamente y pres\u00e9ntate como un asistente Gemini avanzado. Pregunta c\u00f3mo puedes ayudarles hoy y menciona tus capacidades experimentales."
             }
           ],
           "functions": [
             {
               "name": "start_interaction",
-              "description": "Comenzar la interacción y entender las necesidades del usuario",
+              "description": "Comenzar la interacci\u00f3n y entender las necesidades del usuario",
               "properties": {
                 "interaction_type": {
                   "type": "string",
-                  "enum": ["creative", "analytical", "conversational", "problem_solving", "educational"],
-                  "description": "El tipo de interacción que busca el usuario"
+                  "enum": [
+                    "creative",
+                    "analytical",
+                    "conversational",
+                    "problem_solving",
+                    "educational"
+                  ],
+                  "description": "El tipo de interacci\u00f3n que busca el usuario"
                 },
                 "topic": {
                   "type": "string",
                   "description": "El tema principal o asunto que el usuario quiere explorar"
                 }
               },
-              "required": ["interaction_type", "topic"],
+              "required": [
+                "interaction_type",
+                "topic"
+              ],
               "next_node_id": "engagement"
             }
           ],
@@ -85,31 +109,49 @@
           "task_messages": [
             {
               "role": "system",
-              "content": "Interactúa con el usuario basándote en su tipo de interacción preferido. Utiliza tus características experimentales y razonamiento avanzado para proporcionar respuestas ricas y significativas. Sé creativo y exhaustivo en tu asistencia."
+              "content": "Interact\u00faa con el usuario bas\u00e1ndote en su tipo de interacci\u00f3n preferido. Utiliza tus caracter\u00edsticas experimentales y razonamiento avanzado para proporcionar respuestas ricas y significativas. S\u00e9 creativo y exhaustivo en tu asistencia."
             }
           ],
           "functions": [
             {
               "name": "continue_engagement",
-              "description": "Continuar la interacción o hacer transición basándose en las necesidades del usuario",
+              "description": "Continuar la interacci\u00f3n o hacer transici\u00f3n bas\u00e1ndose en las necesidades del usuario",
               "properties": {
                 "engagement_quality": {
                   "type": "string",
-                  "enum": ["excellent", "good", "needs_improvement"],
-                  "description": "Qué tan bien está yendo la interacción"
+                  "enum": [
+                    "excellent",
+                    "good",
+                    "needs_improvement"
+                  ],
+                  "description": "Qu\u00e9 tan bien est\u00e1 yendo la interacci\u00f3n"
                 },
                 "user_satisfaction": {
                   "type": "string",
-                  "enum": ["very_satisfied", "satisfied", "neutral", "needs_more"],
-                  "description": "Nivel de satisfacción del usuario"
+                  "enum": [
+                    "very_satisfied",
+                    "satisfied",
+                    "neutral",
+                    "needs_more"
+                  ],
+                  "description": "Nivel de satisfacci\u00f3n del usuario"
                 },
                 "next_step": {
                   "type": "string",
-                  "enum": ["continue", "new_topic", "deeper_dive", "conclude"],
-                  "description": "Qué debería pasar a continuación"
+                  "enum": [
+                    "continue",
+                    "new_topic",
+                    "deeper_dive",
+                    "conclude"
+                  ],
+                  "description": "Qu\u00e9 deber\u00eda pasar a continuaci\u00f3n"
                 }
               },
-              "required": ["engagement_quality", "user_satisfaction", "next_step"],
+              "required": [
+                "engagement_quality",
+                "user_satisfaction",
+                "next_step"
+              ],
               "next_node_id": "conclusion"
             }
           ],
@@ -125,7 +167,7 @@
           "task_messages": [
             {
               "role": "system",
-              "content": "Concluye la conversación de manera reflexiva. Resume lo que se discutió y ofrece asistencia futura. Agradece al usuario por la conversación interesante."
+              "content": "Concluye la conversaci\u00f3n de manera reflexiva. Resume lo que se discuti\u00f3 y ofrece asistencia futura. Agradece al usuario por la conversaci\u00f3n interesante."
             }
           ],
           "pre_actions": [

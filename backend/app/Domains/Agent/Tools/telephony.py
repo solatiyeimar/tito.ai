@@ -10,14 +10,14 @@ TRANSFER_CALL_TOOL = {
             "properties": {
                 "destination": {
                     "type": "string",
-                    "description": "The phone number or SIP URI to transfer to. If not provided, uses default."
+                    "description": "The phone number or SIP URI to transfer to. If not provided, uses default.",
                 },
                 "reason": {
                     "type": "string",
-                    "description": "Reason for the transfer (e.g., 'user requested human', 'too complex')."
-                }
+                    "description": "Reason for the transfer (e.g., 'user requested human', 'too complex').",
+                },
             },
-            "required": ["reason"]
-        }
-    }
+            "required": ["reason"],
+        },
+    },
 }

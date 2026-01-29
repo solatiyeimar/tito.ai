@@ -1,0 +1,387 @@
+{
+  "info": {
+    "name": "Tito.AI API v2 (DDD + HATEOAS)",
+    "description": "Updated API collection reflecting Domain-Driven Design refactoring, DTOs, and HATEOAS compliance.",
+    "version": "2.0.1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "assistant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "campaign_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bot_pid",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Assistants",
+      "item": [
+        {
+          "name": "List Assistants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistants",
+              "host": ["{{base_url}}"],
+              "path": ["assistants"]
+            },
+            "description": "Lists all available AI assistants."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Assistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sales Assistant v2\",\n  \"description\": \"Proactive sales agent with outbound capabilities\",\n  \"architecture_type\": \"flow\",\n  \"agent\": {\n    \"provider\": \"google\",\n    \"model\": \"gemini-3.0-flash\",\n    \"temperature\": 0.7,\n    \"system_prompt\": \"You are a helpful sales assistant.\"\n  },\n  \"io_layer\": {\n    \"type\": \"webrtc\",\n    \"stt\": {\n      \"provider\": \"deepgram\",\n      \"language\": \"en\",\n      \"enable_mute_filter\": true\n    },\n    \"tts\": {\n      \"provider\": \"cartesia\",\n      \"voice_id\": \"79a125e8-cd45-4c13-8a67-188112f4dd22\"\n    }\n  },\n  \"pipeline_settings\": {\n    \"speak_first\": true,\n    \"initial_message\": \"Hello! How can I help you today?\",\n    \"initial_delay\": 1.0,\n    \"initial_message_interruptible\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/assistants",
+              "host": ["{{base_url}}"],
+              "path": ["assistants"]
+            },
+            "description": "Creates a new AI assistant configuration."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Assistant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistants/{{assistant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["assistants", "{{assistant_id}}"]
+            },
+            "description": "Retrieves details of a specific assistant."
+          },
+          "response": []
+        },
+        {
+          "name": "Chat with Assistant (Text)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Hello, can you help me with pricing?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/assistants/{{assistant_id}}/chat",
+              "host": ["{{base_url}}"],
+              "path": ["assistants", "{{assistant_id}}", "chat"]
+            },
+            "description": "Test the assistant's logic via text chat."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Assistant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sales Assistant v2.1 - Updated\",\n  \"agent\": {\n      \"temperature\": 0.5\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/assistants/{{assistant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["assistants", "{{assistant_id}}"]
+            },
+            "description": "Updates an existing assistant."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Assistant",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistants/{{assistant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["assistants", "{{assistant_id}}"]
+            },
+            "description": "Deletes an assistant."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Calls",
+      "item": [
+        {
+          "name": "Create Call (Browser/WebRTC)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assistant_id\": \"{{assistant_id}}\",\n  \"variables\": {\n    \"customer_name\": \"John Doe\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/calls",
+              "host": ["{{base_url}}"],
+              "path": ["calls"]
+            },
+            "description": "Initiates a new call/room for the assistant. Returns a Daily room URL."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Call (Phone/SIP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assistant_id\": \"{{assistant_id}}\",\n  \"phone_number\": \"+15550101\",\n  \"variables\": {\n    \"customer_name\": \"Jane Doe\"\n  },\n  \"dynamic_vocabulary\": [\"urgent\", \"support\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/calls",
+              "host": ["{{base_url}}"],
+              "path": ["calls"]
+            },
+            "description": "Initiates a phone call (requires SIP/Telephony configuration)."
+          },
+          "response": []
+        },
+        {
+          "name": "RTVI Connect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bot_type\": \"flow\",\n  \"bot_name\": \"Marissa\",\n  \"llm_provider\": \"google\",\n  \"stt_provider\": \"deepgram\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/connect",
+              "host": ["{{base_url}}"],
+              "path": ["connect"]
+            },
+            "description": "Dynamic connection endpoint for RTVI clients (no assistant ID required)."
+          },
+          "response": []
+        },
+        {
+          "name": "RTVI Connect Assistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/connect/{{assistant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["connect", "{{assistant_id}}"]
+            },
+            "description": "RTVI connection using a specific assistant configuration."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/status/{{bot_pid}}",
+              "host": ["{{base_url}}"],
+              "path": ["status", "{{bot_pid}}"]
+            },
+            "description": "Checks the status of a bot process."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Campaigns",
+      "item": [
+        {
+          "name": "List Campaigns",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/campaigns",
+              "host": ["{{base_url}}"],
+              "path": ["campaigns"]
+            },
+            "description": "Lists all campaigns."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Q1 Outreach\",\n  \"type\": \"outbound\",\n  \"assistant_id\": \"{{assistant_id}}\",\n  \"concurrency\": 2,\n  \"contacts\": [\n    {\n      \"name\": \"Test User 1\",\n      \"phone\": \"+15550000001\",\n      \"variables\": { \"interest\": \"high\" }\n    },\n    {\n      \"name\": \"Test User 2\",\n      \"phone\": \"+15550000002\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/campaigns",
+              "host": ["{{base_url}}"],
+              "path": ["campaigns"]
+            },
+            "description": "Creates a new outbound campaign."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Campaign",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/campaigns/{{campaign_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["campaigns", "{{campaign_id}}"]
+            },
+            "description": "Gets details of a campaign."
+          },
+          "response": []
+        },
+        {
+          "name": "Start Campaign",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/campaigns/{{campaign_id}}/start",
+              "host": ["{{base_url}}"],
+              "path": ["campaigns", "{{campaign_id}}", "start"]
+            },
+            "description": "Starts the campaign background process."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Realtime Voice",
+      "item": [
+        {
+          "name": "Voice WebSocket",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistants/{{assistant_id}}/voice",
+              "host": ["{{base_url}}"],
+              "path": ["assistants", "{{assistant_id}}", "voice"],
+              "protocol": "ws"
+            },
+            "description": "Connects to the real-time voice WebSocket."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Basic test for all requests",
+          "pm.test(\"Status code is successful\", function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 101]);",
+          "});",
+          "",
+          "// Auto-capture IDs",
+          "if (pm.response.code === 201 || pm.response.code === 200) {",
+          "    try {",
+          "        var jsonData = pm.response.json();",
+          "        if (jsonData.id) {",
+          "            if (pm.request.url.path.includes('assistants') && pm.request.method === 'POST') {",
+          "                pm.collectionVariables.set('assistant_id', jsonData.id);",
+          "                console.log('Captured assistant_id:', jsonData.id);",
+          "            }",
+          "            if (pm.request.url.path.includes('campaigns') && pm.request.method === 'POST') {",
+          "                pm.collectionVariables.set('campaign_id', jsonData.id);",
+          "                console.log('Captured campaign_id:', jsonData.id);",
+          "            }",
+          "            if (pm.request.url.path.includes('calls') && pm.request.method === 'POST') {",
+          "                 pm.collectionVariables.set('bot_pid', jsonData.id);",
+          "                 console.log('Captured bot_pid:', jsonData.id);",
+          "            }",
+          "        }",
+          "        if (jsonData.bot_pid) {",
+          "             pm.collectionVariables.set('bot_pid', jsonData.bot_pid);",
+          "        }",
+          "    } catch(e) {}",
+          "}"
+        ]
+      }
+    }
+  ]
+}

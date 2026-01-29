@@ -17,7 +17,7 @@ Sistema de asistente de voz con IA altamente extensible para calificación de cl
 
 | Tipo | Proveedores |
 | :--- | :--- |
-| **LLM** | Google (Gemini 2.0+), OpenAI (GPT-4o), Anthropic (Claude 3.5), Groq, Together AI, Mistral |
+| **LLM** | Google (Gemini 3.0+), OpenAI (GPT-5o), Anthropic (Claude 3.5), Groq, Together AI, Mistral |
 | **STT** | Deepgram (Nova 3), Gladia, AssemblyAI, Groq (Whisper) |
 | **TTS** | Deepgram, Cartesia, ElevenLabs, PlayHT, Rime, OpenAI, Azure |
 | **Multimodal** | Gemini Multimodal Live, OpenAI Realtime, AWS Nova Sonic, Ultravox |
@@ -337,7 +337,7 @@ STT_PROVIDER=deepgram
 TTS_PROVIDER=deepgram
 
 # Modelos
-LLM_MODEL=gemini-2.0-flash
+LLM_MODEL=gemini-3.0-flash
 LLM_TEMPERATURE=0.7
 ```
 
@@ -351,7 +351,7 @@ LLM_TEMPERATURE=0.7
 | `-t, --token` | Token de autenticación (requerido) | `-t eyJ...` |
 | `-b, --bot-type` | Tipo de bot | `-b multimodal` |
 | `-l, --llm-provider` | Proveedor LLM | `-l anthropic` |
-| `-m, --llm-model` | Modelo específico | `-m gpt-4o-mini` |
+| `-m, --llm-model` | Modelo específico | `-m gpt-5o-mini` |
 | `-T, --llm-temperature` | Temperatura del LLM | `-T 0.5` |
 | `-s, --stt-provider` | Proveedor STT | `-s gladia` |
 | `-p, --tts-provider` | Proveedor TTS | `-p elevenlabs` |

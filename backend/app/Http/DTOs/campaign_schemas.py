@@ -1,9 +1,15 @@
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional, Literal
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
 
-class Contact(BaseModel):
+from pydantic import BaseModel, Field
+
+from app.Http.Responses.hateoas import HateoasModel, Link
+
+# --- DTOs ---
+
+
+class ContactDTO(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     phone: str
     name: Optional[str] = None
@@ -11,16 +17,32 @@ class Contact(BaseModel):
     status: Literal["pending", "called", "failed", "completed"] = "pending"
     last_call_id: Optional[str] = None
 
-class CampaignConfig(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+class CampaignCreateRequest(BaseModel):
     name: str
     description: Optional[str] = None
     type: Literal["inbound", "outbound"] = "outbound"
     assistant_id: str
-    contacts: List[Contact] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    status: Literal["draft", "active", "paused", "completed"] = "draft"
-    concurrency: int = 1 # How many calls at a time
-    
-class CampaignResponse(CampaignConfig):
-    pass
+    contacts: List[ContactDTO] = Field(default_factory=list)
+    concurrency: int = 1
+
+
+class CampaignResponse(HateoasModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    type: str
+    assistant_id: str
+    contacts: List[ContactDTO]
+    created_at: datetime
+    status: str
+    concurrency: int
+
+    links: List[Link] = Field(default_factory=list, alias="_links")
+
+    class Config:
+        from_attributes = True
+
+
+# Alias for backward compatibility if needed, or remove if fully refactoring
+CampaignConfig = CampaignResponse

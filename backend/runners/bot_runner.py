@@ -1,14 +1,14 @@
 import argparse
 import asyncio
+import json
 import os
 import time
+from typing import Optional, Type
+
 import aiohttp
-import json
-from typing import Type, Optional
+from dotenv import load_dotenv
 from loguru import logger
 
-
-from dotenv import load_dotenv
 from app.Core.Config.bot import BotConfig
 
 # Load environment variables
@@ -18,8 +18,14 @@ load_dotenv()
 from app.Utils.daily import create_daily_room
 
 
-
-async def run_bot(bot_class: Type, config: BotConfig, room_url: str, token: str, system_messages: Optional[list] = None, webhook_config: Optional['WebhookConfig'] = None) -> None:
+async def run_bot(
+    bot_class: Type,
+    config: BotConfig,
+    room_url: str,
+    token: str,
+    system_messages: Optional[list] = None,
+    webhook_config: Optional["WebhookConfig"] = None,
+) -> None:
     """Universal bot runner handling bot lifecycle.
 
     Args:
@@ -46,8 +52,12 @@ def cli() -> None:
     parser = argparse.ArgumentParser(description="Unified Bot Runner")
 
     # Optional - if not provided, will auto-create a Daily room
-    parser.add_argument("-u", "--room-url", type=str, help="Daily room URL (auto-created if not provided)")
-    parser.add_argument("-t", "--token", type=str, help="Authentication token (auto-created if not provided)")
+    parser.add_argument(
+        "-u", "--room-url", type=str, help="Daily room URL (auto-created if not provided)"
+    )
+    parser.add_argument(
+        "-t", "--token", type=str, help="Authentication token (auto-created if not provided)"
+    )
 
     # Architecture type selection
     parser.add_argument(
@@ -141,6 +151,13 @@ def cli() -> None:
     )
 
     parser.add_argument(
+        "--agent-type",
+        type=str.lower,
+        choices=["inbound", "outbound"],
+        help="Type of agent (inbound/outbound), affects proactivity",
+    )
+
+    parser.add_argument(
         "--speak-first",
         type=lambda x: str(x).lower() in ("true", "1", "t", "yes", "y", "on", "enable", "enabled"),
         help="Whether the bot should speak first (default: true)",
@@ -156,41 +173,53 @@ def cli() -> None:
 
     # Helpers to set env vars if config loaded
     def apply_assistant_config(assistant_id: str):
-        from app.Services.assistant_store import AssistantStore
-        store = AssistantStore()
-        assistant = store.get_assistant(assistant_id)
+        from app.Domains.Assistant.Services.assistant_service import AssistantService
+        from app.Infrastructure.Repositories.file_assistant_repository import (
+            FileAssistantRepository,
+        )
+
+        data_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "resources",
+            "data",
+            "assistants",
+        )
+        repo = FileAssistantRepository(data_dir)
+        service = AssistantService(repo)
+
+        assistant = service.get_assistant(assistant_id)
         if not assistant:
             print(f"❌ Assistant {assistant_id} not found!")
             return None
-        
+
         print(f"🤖 Loading assistant: {assistant.name} ({assistant.id})")
-        
+
         # Core
         os.environ["BOT_NAME"] = assistant.name
         os.environ["ARCHITECTURE_TYPE"] = assistant.architecture_type
-        
+
         # Agent / LLM
         os.environ["LLM_PROVIDER"] = assistant.agent.provider
         if assistant.agent.model:
             os.environ["LLM_MODEL"] = assistant.agent.model
         os.environ["LLM_TEMPERATURE"] = str(assistant.agent.temperature)
-        
+
         # IO Layer
         if assistant.io_layer.stt:
             os.environ["STT_PROVIDER"] = assistant.io_layer.stt.provider
         elif assistant.architecture_type == "multimodal":
             os.environ.pop("STT_PROVIDER", None)
-            
+
         if assistant.io_layer.stt and assistant.io_layer.stt.model:
-            os.environ["STT_MODEL"] = assistant.io_layer.stt.model 
+            os.environ["STT_MODEL"] = assistant.io_layer.stt.model
         if assistant.io_layer.stt and assistant.io_layer.stt.language:
             os.environ["STT_LANGUAGE"] = assistant.io_layer.stt.language
-            
+
         if assistant.io_layer.tts:
             os.environ["TTS_PROVIDER"] = assistant.io_layer.tts.provider
         elif assistant.architecture_type == "multimodal":
             os.environ.pop("TTS_PROVIDER", None)
-            
+
         if assistant.io_layer.tts and assistant.io_layer.tts.voice_id:
             os.environ["TTS_VOICE"] = assistant.io_layer.tts.voice_id
         if assistant.io_layer.tts and assistant.io_layer.tts.language:
@@ -215,45 +244,55 @@ def cli() -> None:
         os.environ["ARCHITECTURE_TYPE"] = args.architecture_type
     if args.bot_name:
         os.environ["BOT_NAME"] = args.bot_name
-    
+
     if args.llm_provider:
         os.environ["LLM_PROVIDER"] = args.llm_provider.lower()
     if args.llm_model:
         os.environ["LLM_MODEL"] = args.llm_model
     if args.llm_temperature is not None:
         os.environ["LLM_TEMPERATURE"] = str(args.llm_temperature)
-    
+
     # Map old args to new environment variables for compatibility
-    if args.google_model: os.environ["LLM_MODEL"] = args.google_model
-    if args.openai_model: os.environ["LLM_MODEL"] = args.openai_model
-    if args.openai_temperature: os.environ["LLM_TEMPERATURE"] = str(args.openai_temperature)
-    
+    if args.google_model:
+        os.environ["LLM_MODEL"] = args.google_model
+    if args.openai_model:
+        os.environ["LLM_MODEL"] = args.openai_model
+    if args.openai_temperature:
+        os.environ["LLM_TEMPERATURE"] = str(args.openai_temperature)
+
     if args.stt_provider:
         os.environ["STT_PROVIDER"] = args.stt_provider.lower()
-    
+
     if args.tts_provider:
         os.environ["TTS_PROVIDER"] = args.tts_provider.lower()
     if args.tts_voice:
         os.environ["TTS_VOICE"] = args.tts_voice
-    
+
     # Map old voice args
-    if hasattr(args, 'deepgram_voice') and args.deepgram_voice: os.environ["DEEPGRAM_VOICE"] = args.deepgram_voice
-    if hasattr(args, 'cartesia_voice') and args.cartesia_voice: os.environ["CARTESIA_VOICE"] = args.cartesia_voice
-    if hasattr(args, 'elevenlabs_voice_id') and args.elevenlabs_voice_id: os.environ["ELEVENLABS_VOICE_ID"] = args.elevenlabs_voice_id
-    if hasattr(args, 'rime_voice_id') and args.rime_voice_id: os.environ["RIME_VOICE_ID"] = args.rime_voice_id
+    if hasattr(args, "deepgram_voice") and args.deepgram_voice:
+        os.environ["DEEPGRAM_VOICE"] = args.deepgram_voice
+    if hasattr(args, "cartesia_voice") and args.cartesia_voice:
+        os.environ["CARTESIA_VOICE"] = args.cartesia_voice
+    if hasattr(args, "elevenlabs_voice_id") and args.elevenlabs_voice_id:
+        os.environ["ELEVENLABS_VOICE_ID"] = args.elevenlabs_voice_id
+    if hasattr(args, "rime_voice_id") and args.rime_voice_id:
+        os.environ["RIME_VOICE_ID"] = args.rime_voice_id
 
     if args.enable_stt_mute_filter is not None:
         os.environ["ENABLE_STT_MUTE_FILTER"] = str(args.enable_stt_mute_filter).lower()
-        
+
     if args.amd_enabled:
         os.environ["AMD_ENABLED"] = args.amd_enabled
-        
+
     if args.stt_keywords:
         os.environ["STT_KEYWORDS"] = args.stt_keywords
-    
+
+    if args.agent_type:
+        os.environ["AGENT_TYPE"] = args.agent_type
+
     if args.speak_first is not None:
         os.environ["SPEAK_FIRST"] = "true" if args.speak_first else "false"
-        
+
     # Instantiate the configuration AFTER setting environment variables
     config = BotConfig()
 
@@ -261,36 +300,46 @@ def cli() -> None:
     if loaded_assistant:
         config.tools = loaded_assistant.agent.tools
         config.flow_config = loaded_assistant.flow
+        config.inactivity_messages = [
+            m.model_dump() for m in loaded_assistant.pipeline_settings.inactivity_messages
+        ]
+        config.initial_message = loaded_assistant.pipeline_settings.initial_message
+        config.initial_delay = loaded_assistant.pipeline_settings.initial_delay
+        config.initial_message_interruptible = loaded_assistant.pipeline_settings.initial_message_interruptible
+        config.interruptibility = loaded_assistant.pipeline_settings.interruptibility
 
     # Determine the bot class to use based on the configuration
     if config.architecture_type == "flow":
         from app.Domains.Agent.Bots.flow import FlowBot
+
         bot_class = FlowBot
     elif config.architecture_type == "multimodal":
         from app.Domains.Agent.Bots.multimodal import MultimodalBot
+
         bot_class = MultimodalBot
     else:
         from app.Domains.Agent.Bots.simple import SimpleBot
+
         bot_class = SimpleBot
 
     async def main():
         room_url = args.room_url
         token = args.token
-        
+
         # Auto-create room if not provided
         if not room_url or not token:
             print("🔄 No room URL/token provided, creating Daily room...")
             room_url, token = await create_daily_room()
-        
+
         system_messages = None
-        
+
         # Determine base system prompt
         base_system_prompt = None
         if args.system_prompt:
-             base_system_prompt = args.system_prompt
+            base_system_prompt = args.system_prompt
         elif loaded_assistant and loaded_assistant.agent.system_prompt:
-             base_system_prompt = loaded_assistant.agent.system_prompt
-        
+            base_system_prompt = loaded_assistant.agent.system_prompt
+
         # Apply variables if provided
         final_system_prompt = base_system_prompt
         if args.prompt_variables and base_system_prompt:
@@ -307,10 +356,21 @@ def cli() -> None:
         webhook_config = None
         if loaded_assistant and loaded_assistant.webhooks:
             webhook_config = loaded_assistant.webhooks
+            print(f"🔗 Webhook configuration loaded: {webhook_config.url} (Events: {webhook_config.events})")
+        else:
+            print("⚠️ No webhook configuration found or loaded.")
 
-        await run_bot(bot_class, config, room_url=room_url, token=token, system_messages=system_messages, webhook_config=webhook_config)
-    
+        await run_bot(
+            bot_class,
+            config,
+            room_url=room_url,
+            token=token,
+            system_messages=system_messages,
+            webhook_config=webhook_config,
+        )
+
     asyncio.run(main())
+
 
 if __name__ == "__main__":
     cli()

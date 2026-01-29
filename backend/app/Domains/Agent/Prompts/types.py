@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Dict, TypeAlias
+from typing import Dict, List, TypeAlias, TypedDict
 
 
 class NodeContent(TypedDict):

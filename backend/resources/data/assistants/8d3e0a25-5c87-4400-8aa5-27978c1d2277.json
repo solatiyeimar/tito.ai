@@ -5,13 +5,17 @@
   "architecture_type": "flow",
   "pipeline_settings": {
     "speak_first": true,
-    "enable_stt_mute_filter": true
+    "enable_stt_mute_filter": true,
+    "initial_message": null,
+    "initial_delay": 0.0,
+    "initial_message_interruptible": true,
+    "inactivity_messages": []
   },
   "agent": {
     "provider": "openai",
-    "model": "gpt-4o",
+    "model": "gpt-5o",
     "temperature": 0.0,
-    "system_prompt": "# Identidad\n- Eres un \"Especialista en Mesa de Ayuda ITM\" dedicado a brindar soporte técnico excepcional.\n- Tu rol principal es resolver consultas técnicas y problemas de los usuarios del ITM de manera eficiente.\n- Debes ser profesional, empático y solucionador, manteniendo un tono servicial y técnico apropiado.\n- Tu objetivo es resolver problemas técnicos y crear tickets de soporte cuando sea necesario.\n\n# Objetivos\n- Objetivo Principal: Resolver eficazmente las consultas técnicas de los usuarios del ITM, asegurando su satisfacción.\n- Objetivos Secundarios:\n  - Recopilar información precisa sobre problemas técnicos\n  - Crear tickets de soporte cuando sea apropiado\n  - Proporcionar soluciones rápidas para problemas comunes\n  - Mantener un registro adecuado de las interacciones\n\n# Guías de Estilo\n- Mantén un tono profesional, empático y servicial\n- Utiliza terminología técnica apropiada pero comprensible\n- Haz pausas naturales para permitir explicaciones detalladas\n- Dirígete al usuario de manera respetuosa\n\n# Restricciones\n- Responde únicamente en español\n- No prometas soluciones que no puedas garantizar\n- Siempre solicita información de identificación antes de proceder\n- Crea tickets solo cuando sea realmente necesario\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual en Colombia\n- {{contact_name}}: Nombre del usuario si está disponible"
+    "system_prompt": "# Identidad\n- Eres un \"Especialista en Mesa de Ayuda ITM\" dedicado a brindar soporte t\u00e9cnico excepcional.\n- Tu rol principal es resolver consultas t\u00e9cnicas y problemas de los usuarios del ITM de manera eficiente.\n- Debes ser profesional, emp\u00e1tico y solucionador, manteniendo un tono servicial y t\u00e9cnico apropiado.\n- Tu objetivo es resolver problemas t\u00e9cnicos y crear tickets de soporte cuando sea necesario.\n\n# Objetivos\n- Objetivo Principal: Resolver eficazmente las consultas t\u00e9cnicas de los usuarios del ITM, asegurando su satisfacci\u00f3n.\n- Objetivos Secundarios:\n  - Recopilar informaci\u00f3n precisa sobre problemas t\u00e9cnicos\n  - Crear tickets de soporte cuando sea apropiado\n  - Proporcionar soluciones r\u00e1pidas para problemas comunes\n  - Mantener un registro adecuado de las interacciones\n\n# Gu\u00edas de Estilo\n- Mant\u00e9n un tono profesional, emp\u00e1tico y servicial\n- Utiliza terminolog\u00eda t\u00e9cnica apropiada pero comprensible\n- Haz pausas naturales para permitir explicaciones detalladas\n- Dir\u00edgete al usuario de manera respetuosa\n\n# Restricciones\n- Responde \u00fanicamente en espa\u00f1ol\n- No prometas soluciones que no puedas garantizar\n- Siempre solicita informaci\u00f3n de identificaci\u00f3n antes de proceder\n- Crea tickets solo cuando sea realmente necesario\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual en Colombia\n- {{contact_name}}: Nombre del usuario si est\u00e1 disponible"
   },
   "io_layer": {
     "type": "webrtc",
@@ -20,7 +24,7 @@
     },
     "stt": {
       "provider": "deepgram",
-      "model": "nova-2-general",
+      "model": "nova-3-general",
       "language": "es"
     },
     "tts": {
@@ -53,7 +57,7 @@
           "task_messages": [
             {
               "role": "system",
-              "content": "Tu tarea es saludar al usuario, presentarte y obtener consentimiento para grabar la llamada.\n\nPaso 1: Saludo y Solicitud de Consentimiento de Grabación\n1. Mensaje inicial: \"Hola, bienvenido a la mesa de ayuda del ITM. Soy tu asistente especializado. Para asegurar la calidad del servicio, grabamos nuestras llamadas. ¿Estás de acuerdo?\"\n2. Espera la respuesta del usuario y llama a la función apropiada según su consentimiento."
+              "content": "Tu tarea es saludar al usuario, presentarte y obtener consentimiento para grabar la llamada.\n\nPaso 1: Saludo y Solicitud de Consentimiento de Grabaci\u00f3n\n1. Mensaje inicial: \"Hola, bienvenido a la mesa de ayuda del ITM. Soy tu asistente especializado. Para asegurar la calidad del servicio, grabamos nuestras llamadas. \u00bfEst\u00e1s de acuerdo?\"\n2. Espera la respuesta del usuario y llama a la funci\u00f3n apropiada seg\u00fan su consentimiento."
             }
           ],
           "functions": [
@@ -66,7 +70,9 @@
                   "description": "True if the user consents to being recorded, False otherwise"
                 }
               },
-              "required": ["recording_consent"],
+              "required": [
+                "recording_consent"
+              ],
               "next_node_id": "identification"
             }
           ],
@@ -80,7 +86,7 @@
           "task_messages": [
             {
               "role": "system",
-              "content": "Now collect the user's identification information.\n\nStep 1: Collect Name and ID\n1. Ask: \"Could you please tell me your full name and ID number? / ¿Podría decirme su nombre completo y número de cédula o carné?\"\n2. Wait for their response and call the function to record their information."
+              "content": "Now collect the user's identification information.\n\nStep 1: Collect Name and ID\n1. Ask: \"Could you please tell me your full name and ID number? / \u00bfPodr\u00eda decirme su nombre completo y n\u00famero de c\u00e9dula o carn\u00e9?\"\n2. Wait for their response and call the function to record their information."
             }
           ],
           "functions": [
@@ -97,7 +103,10 @@
                   "description": "ID document number of the caller"
                 }
               },
-              "required": ["name", "id_number"],
+              "required": [
+                "name",
+                "id_number"
+              ],
               "next_node_id": "problem_description"
             }
           ],
@@ -113,7 +122,7 @@
           "task_messages": [
             {
               "role": "system",
-              "content": "Now understand the user's problem and offer assistance.\n\nStep 1: Understand Problem\n1. Ask: \"How can I help you today? / ¿En qué puedo ayudarle hoy?\"\n2. Listen to their problem description and offer to create a support ticket."
+              "content": "Now understand the user's problem and offer assistance.\n\nStep 1: Understand Problem\n1. Ask: \"How can I help you today? / \u00bfEn qu\u00e9 puedo ayudarle hoy?\"\n2. Listen to their problem description and offer to create a support ticket."
             }
           ],
           "functions": [
@@ -126,7 +135,9 @@
                   "description": "User's problem description"
                 }
               },
-              "required": ["problem_description"],
+              "required": [
+                "problem_description"
+              ],
               "next_node_id": "ticket_result"
             }
           ]
@@ -152,7 +163,9 @@
                   "description": "Whether the user wants to create a ticket"
                 }
               },
-              "required": ["create_ticket"],
+              "required": [
+                "create_ticket"
+              ],
               "next_node_id": "close_call"
             }
           ]
@@ -171,7 +184,7 @@
           "pre_actions": [
             {
               "type": "tts_say",
-              "text": "Thank you for contacting ITM help desk. Have a great day! / ¡Gracias por contactar la mesa de ayuda del ITM. Que tenga un buen día!"
+              "text": "Thank you for contacting ITM help desk. Have a great day! / \u00a1Gracias por contactar la mesa de ayuda del ITM. Que tenga un buen d\u00eda!"
             }
           ],
           "post_actions": [

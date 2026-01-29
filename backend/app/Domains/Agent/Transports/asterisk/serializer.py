@@ -10,8 +10,6 @@ from enum import Enum
 from typing import Optional
 
 from loguru import logger
-from pydantic import BaseModel
-
 from pipecat.audio.dtmf.types import KeypadEntry
 from pipecat.audio.utils import (
     alaw_to_pcm,
@@ -32,6 +30,7 @@ from pipecat.frames.frames import (
     StartFrame,
 )
 from pipecat.serializers.base_serializer import FrameSerializer
+from pydantic import BaseModel
 
 
 class FrameSerializerType(Enum):
@@ -242,7 +241,7 @@ class AsteriskWsFrameSerializer(FrameSerializer):
             data = frame.audio
 
             if not self._params.encoding:
-                 return None
+                return None
             encoding = self._params.encoding.strip().lower()
 
             try:

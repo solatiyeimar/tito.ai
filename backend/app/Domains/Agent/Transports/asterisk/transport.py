@@ -16,8 +16,6 @@ import wave
 from typing import Awaitable, Callable, Optional
 
 from loguru import logger
-from pydantic import BaseModel
-
 from pipecat.frames.frames import (
     CancelFrame,
     EndFrame,
@@ -31,13 +29,14 @@ from pipecat.frames.frames import (
     StartFrame,
 )
 from pipecat.processors.frame_processor import FrameDirection
+from pipecat.serializers.base_serializer import FrameSerializer
 from pipecat.transports.base_input import BaseInputTransport
 from pipecat.transports.base_output import BaseOutputTransport
 from pipecat.transports.base_transport import BaseTransport, TransportParams
-from pipecat.serializers.base_serializer import FrameSerializer
 from pipecat.transports.websocket.server import (
     WebsocketServerCallbacks,
 )
+from pydantic import BaseModel
 
 # Use our local serializer implementation
 from app.Domains.Agent.Transports.asterisk.serializer import AsteriskWsFrameSerializer
@@ -645,6 +644,7 @@ class AsteriskWSServerOutputTransport(BaseOutputTransport):
         if self._buffer_state_monitor_task:
             await self.cancel_task(self._buffer_state_monitor_task)
             self._buffer_state_monitor_task = None
+
 
 class AsteriskWSServerTransport(BaseTransport):
     """WebSocket server transport for bidirectional real-time communication.

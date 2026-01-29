@@ -6,25 +6,22 @@ and lifecycle management. It relies on environment variables for configuration
 (e.g., HOST, FAST_API_PORT) and uses run_helpers.py for bot startup.
 """
 
-import sys
 import asyncio
-import aiohttp
+import sys
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from loguru import logger
 
-from pipecat.transports.daily.utils import DailyRESTHelper
-
 from app.Core.Config.server import ServerConfig
+from app.dependencies import get_call_service, get_process_manager, start_process_cleanup
+from app.Domains.Call.Models.call import CallConfig
 from app.Http.Routes.assistants import router as assistants_router
 from app.Http.Routes.calls import router as calls_router
 from app.Http.Routes.campaigns import router as campaigns_router
-import app.Services.runner_service as runner_service
-from app.Services.assistant_store import AssistantStore
-from app.Core.Parsers.bot_config_parser import dict_to_cli_args
+from app.Http.Routes.ws.voice import router as voice_ws_router
 
 # Server configuration
 server_config = ServerConfig()
@@ -46,16 +43,9 @@ logger.add(
 async def lifespan(app: FastAPI):
     """
     FastAPI lifespan manager that handles startup and shutdown tasks.
-    It initializes the DailyRESTHelper and starts a background cleanup task.
+    It initializes the background cleanup task.
     """
-    aiohttp_session = aiohttp.ClientSession()
-    runner_service.daily_helpers["rest"] = DailyRESTHelper(
-        daily_api_key=server_config.daily_api_key,
-        daily_api_url=server_config.daily_api_url,
-        aiohttp_session=aiohttp_session,
-    )
-
-    cleanup_task = asyncio.create_task(runner_service.cleanup_finished_processes())
+    cleanup_task = asyncio.create_task(start_process_cleanup())
     try:
         yield
     finally:
@@ -64,7 +54,8 @@ async def lifespan(app: FastAPI):
             await cleanup_task
         except asyncio.CancelledError:
             pass
-        await aiohttp_session.close()
+        # Close room provider session if needed
+        # (Assuming DailyRoomProvider manages its own session lifecycle per request or via singleton close if exposed)
 
 
 from app.Core.Exceptions.handlers import register_exception_handlers
@@ -74,7 +65,7 @@ app: FastAPI = FastAPI(
     lifespan=lifespan,
     title="Tito.ai Agent API",
     description="API for managing AI agents, calls, and campaigns.",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Register custom exception handlers for standardized error responses
@@ -92,6 +83,7 @@ app.add_middleware(
 app.include_router(assistants_router)
 app.include_router(calls_router)
 app.include_router(campaigns_router)
+app.include_router(voice_ws_router)
 
 
 def parse_server_args():
@@ -115,7 +107,8 @@ def parse_server_args():
     if server_args.reload:
         server_config.reload = server_args.reload
 
-    runner_service.bot_args = remaining_args
+    # Pass remaining args to ProcessManager
+    get_process_manager().set_base_args(remaining_args)
 
 
 # Call this before starting the app
@@ -125,23 +118,31 @@ parse_server_args()
 @app.get(
     "/",
     summary="Start Agent (Browser)",
-    description="Endpoint for direct browser access. Creates a Daily room and redirects the user to it after spawning a bot."
+    description="Endpoint for direct browser access. Creates a Daily room and redirects the user to it after spawning a bot.",
 )
 async def start_agent(request: Request):
     """
     Creates a room and spawns a bot subprocess, then redirects to the room URL.
+    This is a quick demo endpoint that starts a bot with default config (or whatever args passed).
     """
     logger.info("Creating room for bot (browser access)")
-    room_url, token = await runner_service.create_room_and_token()
-    logger.info(f"Room URL: {room_url}")
 
-    # Start bot and redirect to room
-    await runner_service.start_bot_process(room_url, token)
-    return RedirectResponse(room_url)
+    # We use CallService directly here (Service Locator pattern for this root endpoint simplicity)
+    service = get_call_service()
+
+    # Start a generic RTVI session
+    try:
+        session = await service.start_rtvi_session({})
+        logger.info(f"Room URL: {session.room_url}")
+        return RedirectResponse(session.room_url)
+    except Exception as e:
+        logger.error(f"Failed to start agent: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
     import uvicorn
+
     logger.info("Starting FastAPI server")
     uvicorn.run(
         "main:app",
@@ -149,4 +150,3 @@ if __name__ == "__main__":
         port=server_config.port,
         reload=server_config.reload,
     )
-

@@ -1,0 +1,12 @@
+{
+    "id": "default.system_prompt",
+    "name": "default.system_prompt",
+    "description": "Fallback system prompt when no specific prompt is provided",
+    "template": "You are a helpful voice assistant.",
+    "input_variables": [],
+    "version": "1.0.0",
+    "tags": [
+        "default",
+        "system"
+    ]
+}

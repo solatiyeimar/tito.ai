@@ -11,4 +11,3 @@ Each module provides a typed interface and follows consistent patterns for:
 # from .calcom_api import CalComAPI
 
 __all__ = []
-

@@ -1,7 +1,7 @@
 import asyncio
-from loguru import logger
-import google.ai.generativelanguage as glm
 
+import google.ai.generativelanguage as glm
+from loguru import logger
 from pipecat.frames.frames import (
     CancelFrame,
     EndFrame,
@@ -10,22 +10,18 @@ from pipecat.frames.frames import (
     FunctionCallResultFrame,
     LLMFullResponseEndFrame,
     LLMFullResponseStartFrame,
+    LLMContextFrame,
+    LLMMessagesUpdateFrame,
     StartFrame,
     StartInterruptionFrame,
     SystemFrame,
     TextFrame,
     UserStartedSpeakingFrame,
     UserStoppedSpeakingFrame,
-    LLMMessagesFrame,
-)
-
-from pipecat.processors.aggregators.llm_response import LLMResponseAggregator
-from pipecat.processors.aggregators.openai_llm_context import (
-    OpenAILLMContextFrame,
 )
 
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
-from pipecat.sync.base_notifier import BaseNotifier
+from pipecat.utils.sync.base_notifier import BaseNotifier
 
 CLASSIFIER_SYSTEM_INSTRUCTION = """INSTRUCCIÓN CRÍTICA:
 Usted es un CLASIFICADOR BINARIO que SÓLO debe responder "SÍ" o "NO".
@@ -245,15 +241,15 @@ class StatementJudgeContextFilter(FrameProcessor):
             await self.push_frame(frame, direction)
             return
 
-        # Just treat an LLMMessagesFrame as complete, no matter what.
-        if isinstance(frame, LLMMessagesFrame):
+        # Just treat an LLMMessagesUpdateFrame as complete, no matter what.
+        if isinstance(frame, LLMMessagesUpdateFrame):
             await self._notifier.notify()
             return
 
-        # Otherwise, we only want to handle OpenAILLMContextFrames, and only want to push a simple
+        # Otherwise, we only want to handle LLMContextFrame, and only want to push a simple
         # messages frame that contains a system prompt and the most recent user messages,
         # concatenated.
-        if isinstance(frame, OpenAILLMContextFrame):
+        if isinstance(frame, LLMContextFrame):
             # Take text content from the most recent user messages.
             messages = frame.context.messages
             # logger.debug(f"Processing context messages: {messages}")
@@ -275,7 +271,7 @@ class StatementJudgeContextFilter(FrameProcessor):
                 if text:
                     user_text_messages.append(text)
 
-            # If we have any user text content, push an LLMMessagesFrame
+            # If we have any user text content, push an LLMMessagesUpdateFrame
             if user_text_messages:
                 user_message = " ".join(reversed(user_text_messages))
                 # logger.debug(f"Final user message: {user_message}")
@@ -291,7 +287,7 @@ class StatementJudgeContextFilter(FrameProcessor):
                         )
                 messages.append(glm.Content(role="user", parts=[glm.Part(text=user_message)]))
                 # logger.debug(f"Pushing classifier messages: {messages}")
-                await self.push_frame(LLMMessagesFrame(messages))
+                await self.push_frame(LLMMessagesUpdateFrame(messages=messages))
             # else:
             # logger.debug("No user text messages found to process")
             return
@@ -322,33 +318,31 @@ class CompletenessCheck(FrameProcessor):
             await self.push_frame(frame, direction)
 
 
-class UserAggregatorBuffer(LLMResponseAggregator):
+class UserAggregatorBuffer(FrameProcessor):
     """Buffers the output of the transcription LLM. Used by the bot output gate."""
 
     def __init__(self, **kwargs):
-        super().__init__(
-            messages=None,
-            role=None,
-            start_frame=LLMFullResponseStartFrame,
-            end_frame=LLMFullResponseEndFrame,
-            accumulator_frame=TextFrame,
-            handle_interruptions=True,
-            expect_stripped_words=False,
-        )
+        super().__init__(**kwargs)
         self._transcription = ""
+        self._aggregation = ""
+        self._started = False
 
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         await super().process_frame(frame, direction)
-        # parent method pushes frames
+        
         if isinstance(frame, UserStartedSpeakingFrame):
             self._transcription = ""
-
-    async def _push_aggregation(self):
-        if self._aggregation:
+        elif isinstance(frame, LLMFullResponseStartFrame):
+            self._started = True
+            self._aggregation = ""
+        elif isinstance(frame, LLMFullResponseEndFrame):
+            self._started = False
             self._transcription = self._aggregation
             self._aggregation = ""
+        elif isinstance(frame, TextFrame) and self._started:
+            self._aggregation += frame.text
 
-            # logger.debug(f"[Transcription] {self._transcription}")
+
 
     async def wait_for_transcription(self):
         while not self._transcription:

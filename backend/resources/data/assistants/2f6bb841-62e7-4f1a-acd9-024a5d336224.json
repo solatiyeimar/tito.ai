@@ -2,7 +2,7 @@
   "id": "2f6bb841-62e7-4f1a-acd9-024a5d336224",
   "name": "Bot de Acción (Solo Herramientas)",
   "description": "Enfocado en ejecutar acciones de CRM. Sin base de conocimiento.",
-  "architecture_type": "simple",//simple,flow,multimodal
+  "architecture_type": "simple",
   "agent": {
     "provider": "openai",
     "model": "gpt-4o",
@@ -77,6 +77,18 @@
             ]
           }
         }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "get_scheduled_appointments",
+          "description": "Obtiene la lista de citas programadas en esta sesión",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          }
+        }
       }
     ]
   },
@@ -87,7 +99,7 @@
     },
     "stt": {
       "provider": "deepgram",
-      "model": "nova-2-general",
+      "model": "nova-3-general",
       "language": "es"
     },
     "tts": {
@@ -105,5 +117,22 @@
     "headers": {
       "Authorization": "Bearer internal-secret-token"
     }
+  },
+  "pipeline_settings": {
+    "initial_message": "Hola, bienvenido a ITM, ¿en qué puedo ayudarte?",
+    "initial_delay": 2.0,
+    "initial_message_interruptible": false,
+    "inactivity_messages": [
+      {
+        "timeout": 5.0,
+        "message": "¿Sigues ahí?",
+        "end_behavior": "continue"
+      },
+      {
+        "timeout": 15.0,
+        "message": "Como no me has respondido, voy a colgar. Gracias por tu tiempo.",
+        "end_behavior": "hangup"
+      }
+    ]
   }
 }

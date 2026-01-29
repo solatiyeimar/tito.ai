@@ -1,77 +1,120 @@
-from fastapi import APIRouter, HTTPException, Request
-from typing import List
-from app.Services.assistant_store import AssistantStore
-from app.Http.DTOs.schemas import AssistantConfig, AssistantResponse, Link
-from app.Http.DTOs.error_schemas import APIErrorResponse
+from typing import List, Optional
 
-router = APIRouter(prefix="/assistants", tags=["Assistants"])
-store = AssistantStore()
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
-def add_links(assistant: AssistantConfig, request: Request) -> AssistantResponse:
-    base_url = str(request.base_url).rstrip("/")
-    links = [
-        Link(href=f"{base_url}/assistants/{assistant.id}", method="GET", rel="self"),
-        Link(href=f"{base_url}/assistants/{assistant.id}", method="PUT", rel="update"),
-        Link(href=f"{base_url}/assistants/{assistant.id}", method="DELETE", rel="delete"),
-        Link(href=f"{base_url}/calls", method="POST", rel="call"),
-    ]
-    # Convert to dict, add _links, then validate as AssistantResponse
+from app.dependencies import get_assistant_service
+from app.Domains.Assistant.Models.assistant import Assistant
+from app.Domains.Assistant.Services.assistant_service import AssistantService
+from app.Http.Responses.hateoas import HateoasModel, Link
+
+router = APIRouter(tags=["Assistants"])
+
+# --- DTOs ---
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+
+class ChatResponse(BaseModel):
+    response: str
+
+
+class AssistantResponseDTO(HateoasModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    agent: dict
+    io_layer: dict
+    pipeline_settings: dict
+    created_at: str
+
+    # Re-declare to force order at the end
+    links: List[Link] = Field(default_factory=list, alias="_links")
+
+    class Config:
+        from_attributes = True
+
+
+def _map_to_response(assistant: Assistant, request: Request) -> AssistantResponseDTO:
+    # Manual mapping to ensure safety
     data = assistant.model_dump()
-    data["_links"] = links
-    return AssistantResponse(**data)
+    data["created_at"] = str(data["created_at"])
 
-@router.get(
-    "", 
-    response_model=List[AssistantResponse],
-    summary="List all assistants",
-    description="Retrieve a list of all configured AI assistants with their HATEOAS links."
-)
-async def list_assistants(request: Request):
-    """
-    Returns a list of all available assistants in the store.
-    """
-    assistants = store.list_assistants()
-    return [add_links(a, request) for a in assistants]
+    dto = AssistantResponseDTO(**data)
+    base = str(request.base_url).rstrip("/")
+    dto.add_link("self", f"{base}/assistants/{assistant.id}", "GET")
+    dto.add_link("chat", f"{base}/assistants/{assistant.id}/chat", "POST")
+    dto.add_link(
+        "voice_ws", f"{base.replace('http', 'ws')}/assistants/{assistant.id}/voice", "WEBSOCKET"
+    )
+    return dto
 
-@router.post(
-    "", 
-    response_model=AssistantResponse, 
-    status_code=201,
-    summary="Create a new assistant",
-    responses={422: {"model": APIErrorResponse}}
-)
-async def create_assistant(assistant: AssistantConfig, request: Request):
-    """
-    Creates a new assistant configuration. 
-    Validation errors will return a detail breakdown.
-    """
-    created = store.create_assistant(assistant)
-    return add_links(created, request)
 
-@router.get(
-    "/{assistant_id}", 
-    response_model=AssistantResponse,
-    summary="Get assistant details",
-    responses={404: {"model": APIErrorResponse}}
-)
-async def get_assistant(assistant_id: str, request: Request):
-    """
-    Retrieve specific assistant details by ID.
-    Returns 404 if the assistant does not exist.
-    """
-    assistant = store.get_assistant(assistant_id)
+# --- Endpoints ---
+
+
+@router.get("/assistants", response_model=List[AssistantResponseDTO])
+async def list_assistants(
+    request: Request, service: AssistantService = Depends(get_assistant_service)
+):
+    assistants = service.list_assistants()
+    return [_map_to_response(a, request) for a in assistants]
+
+
+@router.post("/assistants", response_model=AssistantResponseDTO, status_code=201)
+async def create_assistant(
+    assistant: Assistant,
+    request: Request,
+    service: AssistantService = Depends(get_assistant_service),
+):
+    created = service.create_assistant(assistant)
+    return _map_to_response(created, request)
+
+
+@router.get("/assistants/{assistant_id}", response_model=AssistantResponseDTO)
+async def get_assistant(
+    assistant_id: str, request: Request, service: AssistantService = Depends(get_assistant_service)
+):
+    assistant = service.get_assistant(assistant_id)
     if not assistant:
         raise HTTPException(status_code=404, detail="Assistant not found")
-    return add_links(assistant, request)
+    return _map_to_response(assistant, request)
 
-@router.delete(
-    "/{assistant_id}",
-    summary="Delete an assistant",
-    responses={404: {"model": APIErrorResponse}}
-)
-async def delete_assistant(assistant_id: str):
-    """
-    Deletes an assistant configuration by ID.
-    """
-    store.delete_assistant(assistant_id)
-    return {"status": "success", "message": f"Assistant {assistant_id} deleted"}
+
+@router.put("/assistants/{assistant_id}", response_model=AssistantResponseDTO)
+async def update_assistant(
+    assistant_id: str,
+    update_data: dict,
+    request: Request,
+    service: AssistantService = Depends(get_assistant_service),
+):
+    updated = service.update_assistant(assistant_id, update_data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Assistant not found")
+    return _map_to_response(updated, request)
+
+
+@router.delete("/assistants/{assistant_id}")
+async def delete_assistant(
+    assistant_id: str, service: AssistantService = Depends(get_assistant_service)
+):
+    success = service.delete_assistant(assistant_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Assistant not found")
+    return JSONResponse({"message": "Deleted successfully"})
+
+
+@router.post("/assistants/{assistant_id}/chat", response_model=ChatResponse)
+async def chat_with_assistant(
+    assistant_id: str, body: ChatRequest, service: AssistantService = Depends(get_assistant_service)
+):
+    try:
+        response_text = await service.chat_with_assistant(assistant_id, body.message)
+        return ChatResponse(response=response_text)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
