@@ -1,0 +1,446 @@
+{
+  "info": {
+    "name": "Tito.AI API",
+    "description": "Colección completa de endpoints para la API de Tito.AI - Sistema de asistentes de voz con IA",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:7860",
+      "type": "string"
+    },
+    {
+      "key": "assistant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "campaign_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bot_pid",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Assistants",
+      "item": [
+        {
+          "name": "List Assistants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistants",
+              "host": ["{{base_url}}"],
+              "path": ["assistants"]
+            },
+            "description": "Obtiene la lista de todos los asistentes disponibles"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Assistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Asistente de Ventas\",\n  \"description\": \"Asistente especializado en calificación de leads\",\n  \"architecture_type\": \"flow\",\n  \"agent\": {\n    \"system_prompt\": \"Eres un asistente de ventas profesional que ayuda a calificar clientes potenciales. Sé amable, profesional y eficiente.\",\n    \"provider\": \"google\",\n    \"model\": \"gemini-2.0-flash\",\n    \"temperature\": 0.7\n  },\n  \"io_layer\": {\n    \"stt\": {\n      \"provider\": \"deepgram\",\n      \"language\": \"es\",\n      \"enable_mute_filter\": true\n    },\n    \"tts\": {\n      \"provider\": \"deepgram\",\n      \"voice_id\": \"aura-luna-es\",\n      \"language\": \"es\",\n      \"speed\": 1.0\n    }\n  },\n  \"flow\": {\n    \"initial_node\": \"greeting\",\n    \"nodes\": {\n      \"greeting\": {\n        \"messages\": [\n          {\n            \"role\": \"system\",\n            \"content\": \"Saluda al cliente y pregunta su nombre.\"\n          }\n        ],\n        \"functions\": [\n          {\n            \"name\": \"collect_name\",\n            \"description\": \"Recopilar el nombre del cliente\",\n            \"properties\": {\n              \"name\": {\n                \"type\": \"string\",\n                \"description\": \"Nombre del cliente\"\n              }\n            },\n            \"required\": [\"name\"],\n            \"handler\": \"handle_name_collection\",\n            \"transition_callback\": \"transition_to_qualification\"\n          }\n        ]\n      },\n      \"qualification\": {\n        \"messages\": [\n          {\n            \"role\": \"system\",\n            \"content\": \"Califica al cliente preguntando sobre su empresa y necesidades.\"\n          }\n        ],\n        \"functions\": [\n          {\n            \"name\": \"qualify_lead\",\n            \"description\": \"Calificar el lead basado en criterios\",\n            \"properties\": {\n              \"company_size\": {\n                \"type\": \"string\",\n                \"description\": \"Tamaño de la empresa\"\n              },\n              \"budget\": {\n                \"type\": \"string\",\n                \"description\": \"Presupuesto disponible\"\n              },\n              \"timeline\": {\n                \"type\": \"string\",\n                \"description\": \"Cronograma de implementación\"\n              }\n            },\n            \"required\": [\"company_size\", \"budget\", \"timeline\"],\n            \"handler\": \"handle_lead_qualification\",\n            \"transition_callback\": \"transition_to_closing\"\n          }\n        ]\n      },\n      \"closing\": {\n        \"messages\": [\n          {\n            \"role\": \"system\",\n            \"content\": \"Cierra la conversación y programa próximos pasos.\"\n          }\n        ],\n        \"functions\": [\n          {\n            \"name\": \"schedule_followup\",\n            \"description\": \"Programar seguimiento\",\n            \"properties\": {\n              \"preferred_time\": {\n                \"type\": \"string\",\n                \"description\": \"Hora preferida para seguimiento\"\n              },\n              \"contact_method\": {\n                \"type\": \"string\",\n                \"description\": \"Método de contacto preferido\"\n              }\n            },\n            \"required\": [\"preferred_time\", \"contact_method\"],\n            \"handler\": \"handle_followup_scheduling\"\n          }\n        ]\n      }\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/assistants",
+              "host": ["{{base_url}}"],
+              "path": ["assistants"]
+            },
+            "description": "Crea un nuevo asistente con configuración completa"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Assistant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistants/{{assistant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["assistants", "{{assistant_id}}"]
+            },
+            "description": "Obtiene los detalles de un asistente específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Assistant",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistants/{{assistant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["assistants", "{{assistant_id}}"]
+            },
+            "description": "Elimina un asistente por su ID"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para gestionar asistentes de IA"
+    },
+    {
+      "name": "Calls",
+      "item": [
+        {
+          "name": "Browser Access",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Acceso directo desde navegador - crea sala y redirige"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assistant_id\": \"{{assistant_id}}\",\n  \"phone_number\": \"+1234567890\",\n  \"variables\": {\n    \"customer_name\": \"Juan Pérez\",\n    \"product\": \"Software CRM\",\n    \"company\": \"TechCorp\"\n  },\n  \"secrets\": {\n    \"crm_api_key\": \"secret_key_here\"\n  },\n  \"dynamic_vocabulary\": [\"CRM\", \"software\", \"integración\", \"automatización\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/calls",
+              "host": ["{{base_url}}"],
+              "path": ["calls"]
+            },
+            "description": "Inicia una nueva llamada con un asistente específico"
+          },
+          "response": []
+        },
+        {
+          "name": "RTVI Connect (Dynamic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bot_type\": \"flow\",\n  \"bot_name\": \"Marissa\",\n  \"llm_provider\": \"google\",\n  \"llm_model\": \"gemini-2.0-flash\",\n  \"llm_temperature\": 0.7,\n  \"stt_provider\": \"deepgram\",\n  \"tts_provider\": \"deepgram\",\n  \"tts_voice\": \"aura-luna-es\",\n  \"enable_stt_mute_filter\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/connect",
+              "host": ["{{base_url}}"],
+              "path": ["connect"]
+            },
+            "description": "Conexión RTVI con configuración inline dinámica"
+          },
+          "response": []
+        },
+        {
+          "name": "Connect Assistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variables\": {\n    \"customer_name\": \"María García\",\n    \"lead_source\": \"Website\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/assistants/{{assistant_id}}/connect",
+              "host": ["{{base_url}}"],
+              "path": ["assistants", "{{assistant_id}}", "connect"]
+            },
+            "description": "Conecta un cliente RTVI a un bot basado en un asistente"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bot Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/status/{{bot_pid}}",
+              "host": ["{{base_url}}"],
+              "path": ["status", "{{bot_pid}}"]
+            },
+            "description": "Verifica el estado de un proceso de bot"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para gestionar llamadas y conexiones"
+    },
+    {
+      "name": "Campaigns",
+      "item": [
+        {
+          "name": "List Campaigns",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/campaigns",
+              "host": ["{{base_url}}"],
+              "path": ["campaigns"]
+            },
+            "description": "Obtiene la lista de todas las campañas"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"campaign_leads_q1_2026\",\n  \"name\": \"Campaña Leads Q1 2026\",\n  \"assistant_id\": \"{{assistant_id}}\",\n  \"contacts\": [\n    {\n      \"name\": \"Juan Pérez\",\n      \"phone\": \"+34612345678\"\n    },\n    {\n      \"name\": \"María García\",\n      \"phone\": \"+34687654321\"\n    },\n    {\n      \"name\": \"Carlos López\",\n      \"phone\": \"+34698765432\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/campaigns",
+              "host": ["{{base_url}}"],
+              "path": ["campaigns"]
+            },
+            "description": "Crea una nueva campaña de llamadas"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Campaign",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/campaigns/{{campaign_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["campaigns", "{{campaign_id}}"]
+            },
+            "description": "Obtiene los detalles de una campaña específica"
+          },
+          "response": []
+        },
+        {
+          "name": "Start Campaign",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/campaigns/{{campaign_id}}/start",
+              "host": ["{{base_url}}"],
+              "path": ["campaigns", "{{campaign_id}}", "start"]
+            },
+            "description": "Inicia la ejecución de una campaña en segundo plano"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para gestionar campañas de llamadas masivas"
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Receive Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"call_completed\",\n  \"timestamp\": \"2026-01-28T13:20:19.076Z\",\n  \"data\": {\n    \"call_id\": \"12345\",\n    \"duration\": 180,\n    \"status\": \"completed\",\n    \"transcript\": \"Conversación completa aquí...\",\n    \"analysis\": {\n      \"lead_qualified\": true,\n      \"interest_level\": \"high\",\n      \"next_action\": \"schedule_demo\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/webhook",
+              "host": ["{{base_url}}"],
+              "path": ["webhook"]
+            },
+            "description": "Recibe webhooks de servicios externos"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para recibir notificaciones de servicios externos"
+    },
+    {
+      "name": "Examples",
+      "item": [
+        {
+          "name": "Multimodal Bot (Gemini Live)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bot_type\": \"multimodal\",\n  \"llm_provider\": \"google\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/connect",
+              "host": ["{{base_url}}"],
+              "path": ["connect"]
+            },
+            "description": "Ejemplo de bot multimodal con Gemini Live (voz a voz nativo)"
+          },
+          "response": []
+        },
+        {
+          "name": "High-Speed Bot (Groq + Rime)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bot_type\": \"flow\",\n  \"llm_provider\": \"groq\",\n  \"llm_model\": \"llama-3.1-70b-versatile\",\n  \"stt_provider\": \"deepgram\",\n  \"tts_provider\": \"rime\",\n  \"tts_voice\": \"mist\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/connect",
+              "host": ["{{base_url}}"],
+              "path": ["connect"]
+            },
+            "description": "Ejemplo de bot de alta velocidad con Groq LLM y Rime TTS"
+          },
+          "response": []
+        },
+        {
+          "name": "Spanish Bot (Anthropic + ElevenLabs)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bot_type\": \"flow\",\n  \"llm_provider\": \"anthropic\",\n  \"llm_model\": \"claude-3-5-sonnet-20241022\",\n  \"tts_provider\": \"elevenlabs\",\n  \"tts_voice\": \"21m00Tcm4TlvDq8ikWAM\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/connect",
+              "host": ["{{base_url}}"],
+              "path": ["connect"]
+            },
+            "description": "Ejemplo de bot en español con Claude y ElevenLabs"
+          },
+          "response": []
+        }
+      ],
+      "description": "Ejemplos de configuraciones comunes de bots"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-generar IDs si están vacíos",
+          "if (!pm.collectionVariables.get('assistant_id')) {",
+          "    pm.collectionVariables.set('assistant_id', 'example-assistant-id');",
+          "}",
+          "",
+          "if (!pm.collectionVariables.get('campaign_id')) {",
+          "    pm.collectionVariables.set('campaign_id', 'campaign_leads_q1_2026');",
+          "}",
+          "",
+          "if (!pm.collectionVariables.get('bot_pid')) {",
+          "    pm.collectionVariables.set('bot_pid', '12345');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Extraer IDs de las respuestas para usar en siguientes requests",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    try {",
+          "        const response = pm.response.json();",
+          "        ",
+          "        // Guardar assistant_id si se crea un asistente",
+          "        if (response.id && pm.request.url.path.includes('assistants')) {",
+          "            pm.collectionVariables.set('assistant_id', response.id);",
+          "            console.log('Assistant ID guardado:', response.id);",
+          "        }",
+          "        ",
+          "        // Guardar bot_pid si se crea una llamada",
+          "        if (response.id && pm.request.url.path.includes('calls')) {",
+          "            pm.collectionVariables.set('bot_pid', response.id);",
+          "            console.log('Bot PID guardado:', response.id);",
+          "        }",
+          "        ",
+          "        // Guardar bot_pid de respuestas de connect",
+          "        if (response.bot_pid) {",
+          "            pm.collectionVariables.set('bot_pid', response.bot_pid);",
+          "            console.log('Bot PID guardado:', response.bot_pid);",
+          "        }",
+          "    } catch (e) {",
+          "        console.log('No se pudo parsear la respuesta JSON');",
+          "    }",
+          "}",
+          "",
+          "// Tests básicos",
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 302]);",
+          "});",
+          "",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});"
+        ]
+      }
+    }
+  ]
+}

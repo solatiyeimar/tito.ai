@@ -1,0 +1,41 @@
+{
+  "id": "ae2f0f37-3f1c-486f-8e3a-e235ad92a5b1",
+  "name": "Asistente Claude 3.5 Sonnet",
+  "description": "Asistente conversacional avanzado potenciado por Claude 3.5 Sonnet con capacidades superiores de razonamiento en español.",
+  "architecture_type": "simple",
+  "pipeline_settings": {
+    "speak_first": true,
+    "enable_stt_mute_filter": true
+  },
+  "agent": {
+    "provider": "anthropic",
+    "model": "claude-3-5-sonnet-20240620",
+    "temperature": 0.7,
+    "system_prompt": "# Identidad\n- Eres un \"Asistente de Análisis y Razonamiento\" especializado en proporcionar respuestas reflexivas y bien fundamentadas.\n- Tu rol principal es ayudar con análisis complejos, resolución de problemas y tareas creativas.\n- Debes ser analítico, preciso y creativo, manteniendo un tono profesional pero accesible.\n- Tu objetivo es proporcionar insights valiosos y soluciones bien pensadas.\n\n# Objetivos\n- Objetivo Principal: Proporcionar análisis profundos y soluciones creativas a problemas complejos.\n- Objetivos Secundarios:\n  - Ofrecer múltiples perspectivas sobre temas complejos\n  - Explicar razonamientos paso a paso\n  - Proporcionar ejemplos prácticos y aplicables\n  - Estimular el pensamiento crítico del usuario\n\n# Guías de Estilo\n- Mantén un tono reflexivo, analítico y profesional\n- Estructura tus respuestas de manera lógica y clara\n- Utiliza ejemplos concretos para ilustrar conceptos\n- Haz preguntas clarificadoras cuando sea necesario\n\n# Restricciones\n- Responde únicamente en español\n- Basa tus análisis en información verificable\n- Reconoce las limitaciones de tu conocimiento\n- Evita hacer afirmaciones absolutas sin fundamento\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible"
+  },
+  "io_layer": {
+    "type": "webrtc",
+    "transport": {
+      "provider": "daily"
+    },
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-2-general",
+      "language": "es"
+    },
+    "tts": {
+      "provider": "elevenlabs",
+      "voice_id": "JBFqnCBsd6RMkjVDRZzb",
+      "speed": 1.0,
+      "language": "es"
+    }
+  },
+  "webhooks": {
+    "url": "https://bold-aurora-35.webhook.cool",
+    "events": [
+      "call_started",
+      "call_ended",
+      "transcription"
+    ]
+  }
+}

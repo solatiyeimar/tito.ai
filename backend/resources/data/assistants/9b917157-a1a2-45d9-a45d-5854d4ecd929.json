@@ -1,0 +1,125 @@
+{
+  "id": "9b917157-a1a2-45d9-a45d-5854d4ecd929",
+  "name": "Agente de Flujo OpenAI GPT-4o",
+  "description": "Agente conversacional basado en flujos potenciado por OpenAI GPT-4o con soporte completo en español.",
+  "architecture_type": "flow",
+  "pipeline_settings": {
+    "speak_first": true,
+    "enable_stt_mute_filter": true
+  },
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "temperature": 0.7,
+    "system_prompt": "# Identidad\n- Eres un \"Asistente OpenAI GPT-4o\" especializado en conversaciones inteligentes y asistencia integral.\n- Tu rol principal es proporcionar ayuda experta en una amplia gama de temas y tareas.\n- Debes ser útil, amigable y profesional, manteniendo un tono accesible y confiable.\n- Tu objetivo es resolver consultas y brindar asistencia de alta calidad.\n\n# Objetivos\n- Objetivo Principal: Proporcionar asistencia experta y conversaciones inteligentes utilizando las capacidades avanzadas de GPT-4o.\n- Objetivos Secundarios:\n  - Responder preguntas con precisión y detalle\n  - Ofrecer soluciones creativas a problemas\n  - Mantener conversaciones naturales y fluidas\n  - Adaptarse al estilo y necesidades del usuario\n\n# Guías de Estilo\n- Mantén un tono útil, amigable y profesional\n- Proporciona respuestas claras y bien estructuradas\n- Utiliza ejemplos cuando sea apropiado\n- Haz preguntas clarificadoras cuando sea necesario\n\n# Restricciones\n- Responde únicamente en español\n- Mantén la precisión en la información proporcionada\n- Reconoce cuando no tienes información suficiente\n- Evita hacer afirmaciones sin fundamento\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible"
+  },
+  "io_layer": {
+    "type": "webrtc",
+    "transport": {
+      "provider": "daily"
+    },
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-2-general",
+      "language": "es"
+    },
+    "tts": {
+      "provider": "openai",
+      "voice_id": "alloy",
+      "speed": 1.0,
+      "language": "es"
+    }
+  },
+  "webhooks": {
+    "url": "https://bold-aurora-35.webhook.cool",
+    "events": [
+      "call_started",
+      "call_ended",
+      "function_called"
+    ]
+  },
+  "flow": {
+    "nodes": [
+      {
+        "id": "greeting",
+        "type": "initial",
+        "data": {
+          "role_messages": [
+            {
+              "role": "system",
+              "content": "Eres un asistente potenciado por OpenAI GPT-4o. Eres útil, amigable y profesional."
+            }
+          ],
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Saluda al usuario calurosamente y pregunta cómo puedes ayudarles hoy."
+            }
+          ],
+          "functions": [
+            {
+              "name": "start_conversation",
+              "description": "Comenzar la conversación y entender lo que necesita el usuario",
+              "properties": {
+                "user_intent": {
+                  "type": "string",
+                  "description": "Lo que el usuario quiere discutir u obtener ayuda"
+                }
+              },
+              "required": ["user_intent"],
+              "next_node_id": "assistance"
+            }
+          ],
+          "respond_immediately": true
+        }
+      },
+      {
+        "id": "assistance",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Proporciona asistencia útil basada en las necesidades del usuario. Puedes ayudar con preguntas generales, proporcionar información o mantener una conversación. Sé atractivo y útil."
+            }
+          ],
+          "functions": [
+            {
+              "name": "provide_help",
+              "description": "Proporcionar asistencia o información al usuario",
+              "properties": {
+                "response_type": {
+                  "type": "string",
+                  "enum": ["continue", "end"],
+                  "description": "Si continuar la conversación o terminarla"
+                }
+              },
+              "required": ["response_type"],
+              "next_node_id": "end"
+            }
+          ],
+          "context_strategy": {
+            "strategy": "append"
+          }
+        }
+      },
+      {
+        "id": "end",
+        "type": "terminal",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Agradece al usuario y termina la conversación cortésmente."
+            }
+          ],
+          "post_actions": [
+            {
+              "type": "end_conversation"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

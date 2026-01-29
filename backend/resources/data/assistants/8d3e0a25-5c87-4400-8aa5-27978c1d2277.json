@@ -1,0 +1,187 @@
+{
+  "id": "8d3e0a25-5c87-4400-8aa5-27978c1d2277",
+  "name": "ITM Help Desk Flow Bot",
+  "description": "Flow-based bot for ITM Help Desk with dynamic configuration using new Pipecat flows conventions.",
+  "architecture_type": "flow",
+  "pipeline_settings": {
+    "speak_first": true,
+    "enable_stt_mute_filter": true
+  },
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "temperature": 0.0,
+    "system_prompt": "# Identidad\n- Eres un \"Especialista en Mesa de Ayuda ITM\" dedicado a brindar soporte técnico excepcional.\n- Tu rol principal es resolver consultas técnicas y problemas de los usuarios del ITM de manera eficiente.\n- Debes ser profesional, empático y solucionador, manteniendo un tono servicial y técnico apropiado.\n- Tu objetivo es resolver problemas técnicos y crear tickets de soporte cuando sea necesario.\n\n# Objetivos\n- Objetivo Principal: Resolver eficazmente las consultas técnicas de los usuarios del ITM, asegurando su satisfacción.\n- Objetivos Secundarios:\n  - Recopilar información precisa sobre problemas técnicos\n  - Crear tickets de soporte cuando sea apropiado\n  - Proporcionar soluciones rápidas para problemas comunes\n  - Mantener un registro adecuado de las interacciones\n\n# Guías de Estilo\n- Mantén un tono profesional, empático y servicial\n- Utiliza terminología técnica apropiada pero comprensible\n- Haz pausas naturales para permitir explicaciones detalladas\n- Dirígete al usuario de manera respetuosa\n\n# Restricciones\n- Responde únicamente en español\n- No prometas soluciones que no puedas garantizar\n- Siempre solicita información de identificación antes de proceder\n- Crea tickets solo cuando sea realmente necesario\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual en Colombia\n- {{contact_name}}: Nombre del usuario si está disponible"
+  },
+  "io_layer": {
+    "type": "webrtc",
+    "transport": {
+      "provider": "daily"
+    },
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-2-general",
+      "language": "es"
+    },
+    "tts": {
+      "provider": "cartesia",
+      "voice_id": "79a125e8-cd45-4c13-8a67-188112f4dd22",
+      "speed": 1.0,
+      "language": "es"
+    }
+  },
+  "webhooks": {
+    "url": "https://bold-aurora-35.webhook.cool",
+    "events": [
+      "call_started",
+      "call_ended",
+      "function_called"
+    ]
+  },
+  "flow": {
+    "nodes": [
+      {
+        "id": "greeting_and_consent",
+        "type": "initial",
+        "data": {
+          "role_messages": [
+            {
+              "role": "system",
+              "content": "You are a helpful ITM help desk assistant. You must be bilingual (English and Spanish) and respond in the language the user speaks."
+            }
+          ],
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Tu tarea es saludar al usuario, presentarte y obtener consentimiento para grabar la llamada.\n\nPaso 1: Saludo y Solicitud de Consentimiento de Grabación\n1. Mensaje inicial: \"Hola, bienvenido a la mesa de ayuda del ITM. Soy tu asistente especializado. Para asegurar la calidad del servicio, grabamos nuestras llamadas. ¿Estás de acuerdo?\"\n2. Espera la respuesta del usuario y llama a la función apropiada según su consentimiento."
+            }
+          ],
+          "functions": [
+            {
+              "name": "collect_recording_consent",
+              "description": "Record whether the user consents to the call being recorded",
+              "properties": {
+                "recording_consent": {
+                  "type": "boolean",
+                  "description": "True if the user consents to being recorded, False otherwise"
+                }
+              },
+              "required": ["recording_consent"],
+              "next_node_id": "identification"
+            }
+          ],
+          "respond_immediately": true
+        }
+      },
+      {
+        "id": "identification",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Now collect the user's identification information.\n\nStep 1: Collect Name and ID\n1. Ask: \"Could you please tell me your full name and ID number? / ¿Podría decirme su nombre completo y número de cédula o carné?\"\n2. Wait for their response and call the function to record their information."
+            }
+          ],
+          "functions": [
+            {
+              "name": "collect_identification",
+              "description": "Collect the user's full name and ID number",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Full name of the caller"
+                },
+                "id_number": {
+                  "type": "string",
+                  "description": "ID document number of the caller"
+                }
+              },
+              "required": ["name", "id_number"],
+              "next_node_id": "problem_description"
+            }
+          ],
+          "context_strategy": {
+            "strategy": "append"
+          }
+        }
+      },
+      {
+        "id": "problem_description",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Now understand the user's problem and offer assistance.\n\nStep 1: Understand Problem\n1. Ask: \"How can I help you today? / ¿En qué puedo ayudarle hoy?\"\n2. Listen to their problem description and offer to create a support ticket."
+            }
+          ],
+          "functions": [
+            {
+              "name": "offer_ticket_creation",
+              "description": "Offer to create a support ticket after listening to the user's problem",
+              "properties": {
+                "problem_description": {
+                  "type": "string",
+                  "description": "User's problem description"
+                }
+              },
+              "required": ["problem_description"],
+              "next_node_id": "ticket_result"
+            }
+          ]
+        }
+      },
+      {
+        "id": "ticket_result",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Confirm ticket creation based on user's preference.\n\nStep 1: Confirm Ticket\n1. Ask if they want to create a ticket for their issue\n2. Based on their response, either create the ticket or acknowledge their preference."
+            }
+          ],
+          "functions": [
+            {
+              "name": "confirm_ticket_creation",
+              "description": "Confirm whether the user wants to create a ticket and generate a ticket number if so.",
+              "properties": {
+                "create_ticket": {
+                  "type": "boolean",
+                  "description": "Whether the user wants to create a ticket"
+                }
+              },
+              "required": ["create_ticket"],
+              "next_node_id": "close_call"
+            }
+          ]
+        }
+      },
+      {
+        "id": "close_call",
+        "type": "terminal",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "End the call politely in the user's language."
+            }
+          ],
+          "pre_actions": [
+            {
+              "type": "tts_say",
+              "text": "Thank you for contacting ITM help desk. Have a great day! / ¡Gracias por contactar la mesa de ayuda del ITM. Que tenga un buen día!"
+            }
+          ],
+          "post_actions": [
+            {
+              "type": "end_conversation"
+            }
+          ],
+          "respond_immediately": true
+        }
+      }
+    ]
+  }
+}

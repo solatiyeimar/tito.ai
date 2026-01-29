@@ -1,0 +1,111 @@
+{
+  "id": "9934fa84-2563-43ab-a3e6-83cb4372a25e",
+  "name": "Bot de Soporte Técnico SaaS v2",
+  "description": "Asistente de soporte técnico nivel 1 con acceso a documentación y estado del servidor.",
+  "created_at": "2026-01-28T10:00:00Z",
+  "version": "2.1.0",
+  "type": "webrtc",
+  "pipeline_settings": {
+    "vad": {
+      "provider": "silero",
+      "params": {
+        "confidence": 0.6,
+        "min_silence_duration_ms": 400
+      }
+    },
+    "interruptibility": true
+  },
+  "agent": {
+    "provider": "google",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0.3,
+    "system_prompt": "# Identidad\n- Eres un \"Ingeniero de Soporte Técnico\" especializado en resolver problemas técnicos de nivel 1.\n- Tu rol principal es diagnosticar y resolver problemas técnicos utilizando documentación y herramientas de monitoreo.\n- Debes ser útil, preciso y técnico, manteniendo un tono profesional y confiable.\n- Tu objetivo es resolver problemas técnicos eficientemente o escalar cuando sea necesario.\n\n# Objetivos\n- Objetivo Principal: Resolver problemas técnicos de nivel 1 utilizando la base de conocimiento y herramientas disponibles.\n- Objetivos Secundarios:\n  - Diagnosticar problemas utilizando información de servidores\n  - Consultar documentación técnica relevante\n  - Crear tickets de soporte cuando sea necesario\n  - Escalar casos complejos apropiadamente\n\n# Guías de Estilo\n- Mantén un tono profesional, técnico y confiable\n- Utiliza terminología técnica apropiada\n- Proporciona pasos de diagnóstico claros\n- Sé preciso en las recomendaciones técnicas\n\n# Restricciones\n- Responde únicamente en español\n- Si no sabes la respuesta en tu base de conocimiento, escala el caso\n- No hagas suposiciones sobre configuraciones específicas\n- Siempre verifica el estado del servidor antes de diagnosticar\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible",
+    "knowledge_base": {
+      "enabled": true,
+      "provider": "pinecone",
+      "index_name": "saas-docs-v1",
+      "namespace": "technical-manuals",
+      "retrieval_settings": {
+        "top_k": 3,
+        "threshold": 0.75
+      }
+    },
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "check_server_status",
+          "description": "Consulta el estado actual de salud de un servidor específico.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "server_id": {
+                "type": "string",
+                "description": "El ID del servidor (ej. us-east-1a)"
+              }
+            },
+            "required": [
+              "server_id"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "create_support_ticket",
+          "description": "Crea un ticket en Jira para problemas no resueltos.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "summary": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "high",
+                  "critical"
+                ]
+              }
+            },
+            "required": [
+              "summary",
+              "priority"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "io_layer": {
+    "transport": {
+      "provider": "daily",
+      "params": {
+        "sample_rate": 24000,
+        "input_channels": 1,
+        "enable_recording": false
+      }
+    },
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-2-general",
+      "language": "es",
+      "params": {
+        "endpointing": 300
+      }
+    },
+    "tts": {
+      "provider": "cartesia",
+      "voice_id": "79a125e8-cd45-4c13-8a67-188112f4dd22",
+      "language": "es",
+      "params": {
+        "speed": "normal",
+        "emotion": [
+          "professionalism:high"
+        ]
+      }
+    }
+  }
+}

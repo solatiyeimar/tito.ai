@@ -1,0 +1,55 @@
+services:  
+  asterisk:
+    image: andrius/asterisk:latest
+    restart: always
+    cap_add:
+      - NET_ADMIN
+      - SYS_PTRACE
+    ports:
+      - "5061:5060/udp"
+      - "5061:5060/tcp"
+      - "20000-20050:20000-20050/udp"
+    volumes:
+      - ./asterisk/config/pjsip.conf:/etc/asterisk/pjsip.conf
+      - ./asterisk/config/extensions.conf:/etc/asterisk/extensions.conf
+      - ./asterisk/config/rtp.conf:/etc/asterisk/rtp.conf
+      - ./asterisk/config/websocket_client.conf:/etc/asterisk/websocket_client.conf
+      - ./asterisk/config/modules.conf:/etc/asterisk/modules.conf
+    environment:
+      - ASTERISK_UID=1000
+      - ASTERISK_GID=1000
+    depends_on:
+      - tito-asterisk
+    networks:
+      - tito-network
+
+  tito-api:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    restart: always
+    ports:
+      - "8766:8766"
+    env_file:
+      - .env
+    networks:
+      - tito-network
+
+  tito-asterisk:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    restart: always
+    command: ["python", "runners/asterisk_runner.py"]
+    ports:
+      - "8765:8765"
+    env_file:
+      - .env
+    depends_on:
+      - tito-api
+    networks:
+      - tito-network
+
+networks:
+  tito-network:
+    driver: bridge

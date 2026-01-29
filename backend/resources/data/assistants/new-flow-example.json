@@ -1,0 +1,224 @@
+{
+  "id": "new-flow-example-2025",
+  "name": "Demostración Avanzada de Flujo (Nuevas Convenciones)",
+  "description": "Demostración de las nuevas convenciones de flujos Pipecat con todas las características: estrategias de contexto, acciones, funciones directas y configuraciones avanzadas de nodos.",
+  "architecture_type": "flow",
+  "pipeline_settings": {
+    "speak_first": true,
+    "enable_stt_mute_filter": true
+  },
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "temperature": 0.7,
+    "system_prompt": "# Identidad\n- Eres un \"Asistente de Demostración de Flujos Avanzados\" especializado en mostrar las últimas capacidades de Pipecat.\n- Tu rol principal es demostrar características avanzadas de flujo de conversación.\n- Debes ser educativo, técnico y entusiasta, manteniendo un tono profesional pero accesible.\n- Tu objetivo es enseñar las nuevas convenciones de flujos de manera práctica.\n\n# Objetivos\n- Objetivo Principal: Demostrar efectivamente las capacidades avanzadas de los flujos Pipecat.\n- Objetivos Secundarios:\n  - Mostrar estrategias de contexto en acción\n  - Ejemplificar el uso de acciones pre/post\n  - Demostrar configuraciones sofisticadas de nodos\n  - Enseñar gestión avanzada de conversaciones\n\n# Guías de Estilo\n- Mantén un tono educativo, técnico y entusiasta\n- Explica conceptos de manera clara y práctica\n- Utiliza ejemplos en tiempo real durante la demostración\n- Haz pausas para permitir comprensión\n\n# Restricciones\n- Responde únicamente en español\n- Enfócate solo en características de flujos Pipecat\n- Mantén las demostraciones prácticas y aplicables\n- No te desvíes del tema de flujos\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible"
+  },
+  "io_layer": {
+    "type": "webrtc",
+    "transport": {
+      "provider": "daily"
+    },
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-2-general",
+      "language": "es"
+    },
+    "tts": {
+      "provider": "cartesia",
+      "voice_id": "79a125e8-cd45-4c13-8a67-188112f4dd22",
+      "speed": 1.0,
+      "language": "es"
+    }
+  },
+  "webhooks": {
+    "url": "https://bold-aurora-35.webhook.cool",
+    "events": [
+      "call_started",
+      "call_ended",
+      "function_called",
+      "node_transition"
+    ]
+  },
+  "flow": {
+    "nodes": [
+      {
+        "id": "welcome",
+        "type": "initial",
+        "data": {
+          "role_messages": [
+            {
+              "role": "system",
+              "content": "Eres un asistente de demostración de flujos avanzados. Muestras las últimas capacidades de flujos Pipecat incluyendo estrategias de contexto, acciones pre/post y gestión sofisticada de conversaciones."
+            }
+          ],
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Da la bienvenida al usuario a la demostración de flujos avanzados. Explica que mostrarás diferentes características de flujo y pregunta qué les gustaría explorar: gestión de contexto, acciones, o flujo de conversación."
+            }
+          ],
+          "functions": [
+            {
+              "name": "select_demo_feature",
+              "description": "Seleccionar qué característica de flujo demostrar",
+              "properties": {
+                "feature": {
+                  "type": "string",
+                  "enum": ["context_strategies", "actions", "conversation_flow", "all_features"],
+                  "description": "La característica de flujo a demostrar"
+                },
+                "user_preference": {
+                  "type": "string",
+                  "description": "Cualquier preferencia específica o interés que mencionó el usuario"
+                }
+              },
+              "required": ["feature"],
+              "next_node_id": "feature_demo"
+            }
+          ],
+          "pre_actions": [
+            {
+              "type": "tts_say",
+              "text": "Inicializando demostración de flujos avanzados..."
+            }
+          ],
+          "respond_immediately": true
+        }
+      },
+      {
+        "id": "feature_demo",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Demuestra la característica de flujo seleccionada. Proporciona explicaciones detalladas y ejemplos. Muestra cómo funciona la característica en la práctica y sus beneficios para la gestión de conversaciones."
+            }
+          ],
+          "functions": [
+            {
+              "name": "complete_demonstration",
+              "description": "Completar la demostración de la característica y recopilar comentarios",
+              "properties": {
+                "demonstration_complete": {
+                  "type": "boolean",
+                  "description": "Si la demostración está completa"
+                },
+                "user_understanding": {
+                  "type": "string",
+                  "enum": ["excellent", "good", "needs_clarification"],
+                  "description": "Nivel de comprensión del usuario"
+                },
+                "next_action": {
+                  "type": "string",
+                  "enum": ["another_feature", "deeper_dive", "questions", "conclude"],
+                  "description": "Qué quiere hacer el usuario a continuación"
+                }
+              },
+              "required": ["demonstration_complete", "user_understanding", "next_action"],
+              "next_node_id": "context_reset_demo"
+            }
+          ],
+          "context_strategy": {
+            "strategy": "append"
+          }
+        }
+      },
+      {
+        "id": "context_reset_demo",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Este nodo demuestra la funcionalidad de reinicio de contexto. Nota cómo el contexto de conversación se ha reiniciado, pero la información clave se preserva a través de un resumen. Pregunta al usuario si nota la diferencia en cómo se gestiona el contexto aquí."
+            }
+          ],
+          "functions": [
+            {
+              "name": "evaluate_context_demo",
+              "description": "Evaluar la comprensión del usuario sobre la gestión de contexto",
+              "properties": {
+                "context_understanding": {
+                  "type": "boolean",
+                  "description": "Si el usuario entiende la demostración de reinicio de contexto"
+                },
+                "wants_more_examples": {
+                  "type": "boolean",
+                  "description": "Si el usuario quiere ver más ejemplos"
+                }
+              },
+              "required": ["context_understanding", "wants_more_examples"],
+              "next_node_id": "final_demo"
+            }
+          ],
+          "context_strategy": {
+            "strategy": "reset_with_summary",
+            "summary_prompt": "Proporciona un resumen conciso de las características de demostración de flujo discutidas hasta ahora, enfocándote en conceptos clave que el usuario aprendió."
+          }
+        }
+      },
+      {
+        "id": "final_demo",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Concluye la demostración resumiendo todas las características avanzadas de flujo mostradas: estrategias de contexto, acciones pre/post, configuraciones sofisticadas de nodos y gestión de conversaciones. Pregunta por preguntas finales."
+            }
+          ],
+          "functions": [
+            {
+              "name": "conclude_demo",
+              "description": "Concluir la sesión de demostración",
+              "properties": {
+                "user_satisfaction": {
+                  "type": "string",
+                  "enum": ["very_satisfied", "satisfied", "neutral", "needs_improvement"],
+                  "description": "Satisfacción del usuario con la demostración"
+                },
+                "final_questions": {
+                  "type": "boolean",
+                  "description": "Si el usuario tiene preguntas finales"
+                }
+              },
+              "required": ["user_satisfaction", "final_questions"],
+              "next_node_id": "goodbye"
+            }
+          ],
+          "pre_actions": [
+            {
+              "type": "tts_say",
+              "text": "Preparando resumen final de la demostración..."
+            }
+          ]
+        }
+      },
+      {
+        "id": "goodbye",
+        "type": "terminal",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Agradece al usuario por participar en la demostración de flujos avanzados. Destaca los beneficios clave de las nuevas convenciones de flujos Pipecat que han experimentado."
+            }
+          ],
+          "pre_actions": [
+            {
+              "type": "tts_say",
+              "text": "¡Gracias por explorar las funciones avanzadas de flujo conmigo!"
+            }
+          ],
+          "post_actions": [
+            {
+              "type": "end_conversation"
+            }
+          ],
+          "respond_immediately": true
+        }
+      }
+    ]
+  }
+}

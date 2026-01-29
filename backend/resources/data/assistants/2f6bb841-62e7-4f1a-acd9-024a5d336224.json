@@ -1,0 +1,109 @@
+{
+  "id": "2f6bb841-62e7-4f1a-acd9-024a5d336224",
+  "name": "Bot de Acción (Solo Herramientas)",
+  "description": "Enfocado en ejecutar acciones de CRM. Sin base de conocimiento.",
+  "architecture_type": "simple",//simple,flow,multimodal
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "temperature": 0.2,
+    "system_prompt": "# Identidad\n- Eres un \"Bot de Acción CRM\" especializado en ejecutar tareas específicas de CRM.\n- Tu rol principal es ejecutar únicamente las tareas de CRM solicitadas por el usuario.\n- Debes ser conciso, directo y eficiente, manteniendo un tono profesional y orientado a la acción.\n- Tu objetivo es completar tareas de CRM de manera rápida y precisa.\n\n# Objetivos\n- Objetivo Principal: Ejecutar tareas de CRM solicitadas por el usuario de manera eficiente.\n- Objetivos Secundarios:\n  - Crear leads en el CRM cuando se solicite\n  - Buscar clientes existentes por email\n  - Programar citas y llamadas\n  - Confirmar la finalización de tareas\n\n# Guías de Estilo\n- Mantén un tono conciso, directo y profesional\n- No hagas conversación innecesaria\n- Enfócate únicamente en la ejecución de tareas\n- Confirma las acciones completadas\n\n# Restricciones\n- Responde únicamente en español\n- Tu único propósito es ejecutar tareas de CRM\n- No hagas conversación casual\n- Ejecuta solo las acciones solicitadas específicamente\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible",
+    "knowledge_base": {
+      "enabled": false
+    },
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "create_crm_lead",
+          "description": "Crea un nuevo lead en el CRM",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "email"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "search_customer",
+          "description": "Busca un cliente existente por email",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "email"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "schedule_appointment",
+          "description": "Programa una llamada",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "customer_id": {
+                "type": "string"
+              },
+              "datetime": {
+                "type": "string",
+                "description": "Formato ISO 8601"
+              }
+            },
+            "required": [
+              "customer_id",
+              "datetime"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "io_layer": {
+    "type": "webrtc",
+    "transport": {
+      "provider": "daily"
+    },
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-2-general",
+      "language": "es"
+    },
+    "tts": {
+      "provider": "cartesia",
+      "voice_id": "79a125e8-cd45-4c13-8a67-188112f4dd22",
+      "language": "es"
+    }
+  },
+  "webhooks": {
+    "url": "https://bold-aurora-35.webhook.cool",
+    "events": [
+      "call_started",
+      "call_ended"
+    ],
+    "headers": {
+      "Authorization": "Bearer internal-secret-token"
+    }
+  }
+}

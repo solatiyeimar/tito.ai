@@ -1,0 +1,229 @@
+{
+  "id": "5cb0f425-3b31-4df4-9585-0e8aa5562de5",
+  "name": "Super Agente (KB + Herramientas + Webhooks + Flujo)",
+  "description": "Asistente integral basado en flujos que demuestra recuperación de conocimiento, llamadas de funciones y webhooks de eventos con flujo de conversación estructurado.",
+  "architecture_type": "flow",
+  "pipeline_settings": {
+    "speak_first": true,
+    "enable_stt_mute_filter": true
+  },
+  "agent": {
+    "provider": "google",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0.5,
+    "system_prompt": "# Identidad\n- Eres un \"Super Agente\" especializado en proporcionar información integral utilizando múltiples herramientas y fuentes.\n- Tu rol principal es combinar datos en tiempo real, políticas empresariales y conversación natural.\n- Debes ser versátil, eficiente y proactivo, manteniendo un tono profesional pero accesible.\n- Tu objetivo es resolver consultas complejas utilizando todas las herramientas disponibles.\n\n# Objetivos\n- Objetivo Principal: Proporcionar asistencia integral utilizando herramientas en tiempo real y base de conocimiento.\n- Objetivos Secundarios:\n  - Verificar información meteorológica actual\n  - Consultar precios de acciones en tiempo real\n  - Acceder a políticas empresariales\n  - Mantener conversaciones estructuradas y útiles\n\n# Guías de Estilo\n- Mantén un tono profesional, eficiente y servicial\n- Utiliza las herramientas apropiadas para cada consulta\n- Proporciona información precisa y actualizada\n- Estructura las respuestas de manera clara y lógica\n\n# Restricciones\n- Responde únicamente en español\n- Utiliza solo herramientas disponibles para obtener datos\n- Verifica la información antes de proporcionarla\n- Mantén la confidencialidad de datos sensibles\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible",
+    "knowledge_base": {
+      "enabled": true,
+      "provider": "pinecone",
+      "index_name": "corporate-knowledge",
+      "namespace": "policies-v1",
+      "retrieval_settings": {
+        "top_k": 3
+      }
+    },
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_current_weather",
+          "description": "Obtener el clima actual en una ubicación específica",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "La ciudad y estado, ej. San Francisco, CA"
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "celsius",
+                  "fahrenheit"
+                ]
+              }
+            },
+            "required": [
+              "location"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "check_stock_price",
+          "description": "Obtener el precio actual de acciones de una empresa",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "El símbolo de la acción, ej. AAPL"
+              }
+            },
+            "required": [
+              "symbol"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "io_layer": {
+    "type": "webrtc",
+    "transport": {
+      "provider": "daily",
+      "params": {
+        "enable_recording": true
+      }
+    },
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-2-general",
+      "language": "es"
+    },
+    "tts": {
+      "provider": "elevenlabs",
+      "voice_id": "JBFqnCBsd6RMkjVDRZzb",
+      "speed": 1.0,
+      "language": "es"
+    }
+  },
+  "webhooks": {
+    "url": "https://bold-aurora-35.webhook.cool",
+    "events": [
+      "call_started",
+      "call_ended",
+      "participant_joined",
+      "transcription",
+      "participant_left",
+      "function_called"
+    ],
+    "headers": {
+      "X-Agent-Type": "Super-V1"
+    }
+  },
+  "flow": {
+    "nodes": [
+      {
+        "id": "greeting",
+        "type": "initial",
+        "data": {
+          "role_messages": [
+            {
+              "role": "system",
+              "content": "Eres un Super Agente con acceso a herramientas en tiempo real y base de conocimiento. Puedes verificar clima, precios de acciones y políticas empresariales."
+            }
+          ],
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Saluda al usuario calurosamente y presenta tus capacidades. Menciona que puedes ayudar con información meteorológica, precios de acciones y políticas empresariales. Pregunta cómo puedes asistirles hoy."
+            }
+          ],
+          "functions": [
+            {
+              "name": "identify_service_needed",
+              "description": "Identificar qué tipo de servicio o información necesita el usuario",
+              "properties": {
+                "service_type": {
+                  "type": "string",
+                  "enum": ["weather", "stocks", "policies", "general", "multiple"],
+                  "description": "El tipo de servicio que solicita el usuario"
+                },
+                "details": {
+                  "type": "string",
+                  "description": "Detalles específicos sobre lo que quiere el usuario"
+                }
+              },
+              "required": ["service_type", "details"],
+              "next_node_id": "service_delivery"
+            }
+          ],
+          "respond_immediately": true
+        }
+      },
+      {
+        "id": "service_delivery",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Basándote en la solicitud del usuario, utiliza tus herramientas disponibles y base de conocimiento para proporcionar la información solicitada. Sé exhaustivo y útil en tu respuesta."
+            }
+          ],
+          "functions": [
+            {
+              "name": "complete_service",
+              "description": "Marcar el servicio como completo y verificar si el usuario necesita algo más",
+              "properties": {
+                "service_completed": {
+                  "type": "boolean",
+                  "description": "Si el servicio solicitado se ha completado"
+                },
+                "user_satisfied": {
+                  "type": "boolean",
+                  "description": "Si el usuario parece satisfecho con la respuesta"
+                },
+                "additional_requests": {
+                  "type": "boolean",
+                  "description": "Si el usuario tiene solicitudes adicionales"
+                }
+              },
+              "required": ["service_completed", "user_satisfied", "additional_requests"],
+              "next_node_id": "followup"
+            }
+          ],
+          "context_strategy": {
+            "strategy": "append"
+          }
+        }
+      },
+      {
+        "id": "followup",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Haz seguimiento con el usuario para ver si necesita asistencia adicional o tiene más preguntas. Sé proactivo en ofrecer tus servicios."
+            }
+          ],
+          "functions": [
+            {
+              "name": "handle_followup",
+              "description": "Manejar cualquier solicitud de seguimiento o concluir la conversación",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": ["new_request", "clarification", "satisfied", "end"],
+                  "description": "Qué quiere hacer el usuario a continuación"
+                }
+              },
+              "required": ["action"],
+              "next_node_id": "end"
+            }
+          ]
+        }
+      },
+      {
+        "id": "end",
+        "type": "terminal",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Agradece al usuario por utilizar tus servicios y hazle saber que puede contactarte en cualquier momento para información meteorológica, de acciones o políticas. Termina la conversación profesionalmente."
+            }
+          ],
+          "post_actions": [
+            {
+              "type": "end_conversation"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

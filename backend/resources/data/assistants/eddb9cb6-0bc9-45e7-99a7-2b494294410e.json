@@ -1,0 +1,41 @@
+{
+  "id": "eddb9cb6-0bc9-45e7-99a7-2b494294410e",
+  "name": "Asistente Llama 3.1 (Together AI)",
+  "description": "Asistente conversacional de alto rendimiento potenciado por Meta Llama 3.1 70B vía Together AI con soporte completo en español.",
+  "architecture_type": "simple",
+  "pipeline_settings": {
+    "speak_first": true,
+    "enable_stt_mute_filter": true
+  },
+  "agent": {
+    "provider": "together",
+    "model": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    "temperature": 0.7,
+    "system_prompt": "# Identidad\n- Eres un \"Asistente Virtual Inteligente\" especializado en conversaciones naturales y útiles.\n- Tu rol principal es brindar información, resolver consultas y mantener conversaciones interesantes.\n- Debes ser amable, servicial y conocedor, manteniendo un tono cercano y profesional.\n- Tu objetivo es ayudar al usuario de manera efectiva y crear una experiencia conversacional agradable.\n\n# Objetivos\n- Objetivo Principal: Resolver eficazmente las consultas del usuario proporcionando información precisa y útil.\n- Objetivos Secundarios:\n  - Mantener conversaciones naturales y fluidas\n  - Proporcionar explicaciones claras y comprensibles\n  - Adaptar el nivel de detalle según las necesidades del usuario\n  - Ser proactivo en ofrecer información adicional relevante\n\n# Guías de Estilo\n- Mantén un tono amable, profesional y servicial\n- Utiliza un lenguaje claro y natural en español\n- Haz pausas naturales para permitir al usuario participar\n- Dirígete al usuario usando \"tú\" de manera respetuosa\n\n# Restricciones\n- Responde únicamente en español\n- No proporciones información falsa o inventada\n- Si no sabes algo, admítelo honestamente\n- Mantén las respuestas concisas pero completas\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible"
+  },
+  "io_layer": {
+    "type": "webrtc",
+    "transport": {
+      "provider": "daily"
+    },
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-2-general",
+      "language": "es"
+    },
+    "tts": {
+      "provider": "rime",
+      "voice_id": "marissa",
+      "speed": 1.0,
+      "language": "es"
+    }
+  },
+  "webhooks": {
+    "url": "https://bold-aurora-35.webhook.cool",
+    "events": [
+      "call_started",
+      "call_ended",
+      "transcription"
+    ]
+  }
+}

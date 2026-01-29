@@ -1,0 +1,146 @@
+{
+  "id": "4a8c4cce-7889-4ca4-8acd-0418dfc4c169",
+  "name": "Agente de Flujo Google Gemini",
+  "description": "Agente conversacional avanzado basado en flujos potenciado por Google Gemini con características experimentales.",
+  "architecture_type": "flow",
+  "pipeline_settings": {
+    "speak_first": true,
+    "enable_stt_mute_filter": true
+  },
+  "agent": {
+    "provider": "google",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0.7,
+    "system_prompt": "# Identidad\n- Eres un \"Asistente Google Gemini Experimental\" especializado en conversaciones avanzadas con capacidades de vanguardia.\n- Tu rol principal es demostrar las capacidades experimentales de Gemini en conversaciones naturales.\n- Debes ser inteligente, creativo y versátil, manteniendo un tono profesional pero accesible.\n- Tu objetivo es proporcionar asistencia de alta calidad utilizando las últimas capacidades de IA.\n\n# Objetivos\n- Objetivo Principal: Demostrar las capacidades experimentales avanzadas de Google Gemini en conversaciones naturales.\n- Objetivos Secundarios:\n  - Manejar conversaciones complejas con razonamiento avanzado\n  - Proporcionar respuestas creativas e innovadoras\n  - Adaptarse dinámicamente al estilo de conversación del usuario\n  - Mostrar capacidades multimodales cuando sea apropiado\n\n# Guías de Estilo\n- Mantén un tono inteligente, creativo y profesional\n- Utiliza capacidades de razonamiento avanzado\n- Adapta tu estilo según el tipo de interacción\n- Haz pausas naturales para facilitar la comprensión\n\n# Restricciones\n- Responde únicamente en español\n- Utiliza solo capacidades verificadas de Gemini\n- Mantén la precisión en información técnica\n- No hagas afirmaciones sobre capacidades no confirmadas\n\n# Variables de Entrada\n- {{current_time}}: Hora y fecha actual\n- {{contact_name}}: Nombre del usuario si está disponible"
+  },
+  "io_layer": {
+    "type": "webrtc",
+    "transport": {
+      "provider": "daily"
+    },
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-2-general",
+      "language": "es"
+    },
+    "tts": {
+      "provider": "deepgram",
+      "voice_id": "aura-asteria-en",
+      "speed": 1.0,
+      "language": "es"
+    }
+  },
+  "webhooks": {
+    "url": "https://bold-aurora-35.webhook.cool",
+    "events": [
+      "call_started",
+      "call_ended",
+      "function_called"
+    ]
+  },
+  "flow": {
+    "nodes": [
+      {
+        "id": "greeting",
+        "type": "initial",
+        "data": {
+          "role_messages": [
+            {
+              "role": "system",
+              "content": "Eres un asistente potenciado por Google Gemini con características experimentales y capacidades avanzadas. Eres inteligente, creativo y puedes manejar conversaciones complejas."
+            }
+          ],
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Saluda al usuario calurosamente y preséntate como un asistente Gemini avanzado. Pregunta cómo puedes ayudarles hoy y menciona tus capacidades experimentales."
+            }
+          ],
+          "functions": [
+            {
+              "name": "start_interaction",
+              "description": "Comenzar la interacción y entender las necesidades del usuario",
+              "properties": {
+                "interaction_type": {
+                  "type": "string",
+                  "enum": ["creative", "analytical", "conversational", "problem_solving", "educational"],
+                  "description": "El tipo de interacción que busca el usuario"
+                },
+                "topic": {
+                  "type": "string",
+                  "description": "El tema principal o asunto que el usuario quiere explorar"
+                }
+              },
+              "required": ["interaction_type", "topic"],
+              "next_node_id": "engagement"
+            }
+          ],
+          "respond_immediately": true
+        }
+      },
+      {
+        "id": "engagement",
+        "type": "standard",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Interactúa con el usuario basándote en su tipo de interacción preferido. Utiliza tus características experimentales y razonamiento avanzado para proporcionar respuestas ricas y significativas. Sé creativo y exhaustivo en tu asistencia."
+            }
+          ],
+          "functions": [
+            {
+              "name": "continue_engagement",
+              "description": "Continuar la interacción o hacer transición basándose en las necesidades del usuario",
+              "properties": {
+                "engagement_quality": {
+                  "type": "string",
+                  "enum": ["excellent", "good", "needs_improvement"],
+                  "description": "Qué tan bien está yendo la interacción"
+                },
+                "user_satisfaction": {
+                  "type": "string",
+                  "enum": ["very_satisfied", "satisfied", "neutral", "needs_more"],
+                  "description": "Nivel de satisfacción del usuario"
+                },
+                "next_step": {
+                  "type": "string",
+                  "enum": ["continue", "new_topic", "deeper_dive", "conclude"],
+                  "description": "Qué debería pasar a continuación"
+                }
+              },
+              "required": ["engagement_quality", "user_satisfaction", "next_step"],
+              "next_node_id": "conclusion"
+            }
+          ],
+          "context_strategy": {
+            "strategy": "append"
+          }
+        }
+      },
+      {
+        "id": "conclusion",
+        "type": "terminal",
+        "data": {
+          "task_messages": [
+            {
+              "role": "system",
+              "content": "Concluye la conversación de manera reflexiva. Resume lo que se discutió y ofrece asistencia futura. Agradece al usuario por la conversación interesante."
+            }
+          ],
+          "pre_actions": [
+            {
+              "type": "tts_say",
+              "text": "Ha sido un placer ayudarle hoy."
+            }
+          ],
+          "post_actions": [
+            {
+              "type": "end_conversation"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
